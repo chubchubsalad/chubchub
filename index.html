@@ -1,0 +1,1550 @@
+  <!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CHUB CHUB — Custom Bowl & Nutrition Calculator</title>
+  <!-- Google Fonts: Prompt & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- html2canvas สำหรับดาวน์โหลดรูปใบเสร็จสรุปออเดอร์ -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    :root {
+      --primary-orange: #FF5E00;
+      --primary-glow: rgba(255, 94, 0, 0.35);
+      --glass-bg: rgba(255, 255, 255, 0.45);
+      --glass-card: rgba(255, 255, 255, 0.55);
+      --glass-card-hover: rgba(255, 255, 255, 0.75);
+      --glass-border: rgba(255, 255, 255, 0.7);
+      --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.08);
+      --text-main: #1D1D1F;
+      --text-muted: #5E5E62;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      min-height: 100vh;
+      color: var(--text-main);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      transition: background-image 0.5s ease-in-out;
+      overflow-x: hidden;
+      padding-bottom: 120px;
+    }
+
+    /* Ambient Blur Layer */
+    .bg-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(circle at 10% 20%, rgba(255, 94, 0, 0.12), transparent 40%),
+                  radial-gradient(circle at 90% 80%, rgba(255, 140, 0, 0.15), transparent 45%);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* Glass Effect Class */
+    .glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+      border-radius: 24px;
+    }
+
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 24px 16px;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      margin-bottom: 24px;
+    }
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+    .logo-badge {
+      background: var(--primary-orange);
+      color: white;
+      font-weight: 800;
+      font-size: 1.25rem;
+      padding: 8px 16px;
+      border-radius: 14px;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 15px var(--primary-glow);
+    }
+    .brand-title {
+      font-weight: 700;
+      font-size: 1.2rem;
+      line-height: 1.2;
+    }
+    .brand-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Step Navigation Tabs */
+    .step-tabs {
+      display: flex;
+      gap: 8px;
+      padding: 6px;
+      margin-bottom: 24px;
+      border-radius: 100px;
+      background: rgba(255, 255, 255, 0.4);
+    }
+    .step-tab {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 100px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .step-tab.active {
+      background: white;
+      color: var(--primary-orange);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+
+    /* Section Cards */
+    .section-card {
+      padding: 28px;
+      margin-bottom: 24px;
+    }
+    .section-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-desc {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    /* Form Fields */
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    @media (max-width: 768px) {
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    input, select {
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 0.95rem;
+      color: var(--text-main);
+      outline: none;
+      transition: all 0.2s;
+    }
+    input:focus, select:focus {
+      border-color: var(--primary-orange);
+      background: white;
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+
+    /* Goal Selector Chips */
+    .chips-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .chip-btn {
+      flex: 1;
+      min-width: 120px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid var(--glass-border);
+      background: rgba(255, 255, 255, 0.6);
+      color: var(--text-main);
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .chip-btn.active {
+      background: var(--primary-orange);
+      color: white;
+      border-color: var(--primary-orange);
+      box-shadow: 0 4px 14px var(--primary-glow);
+    }
+
+    /* Target Result Display Bar */
+    .target-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+      margin-top: 20px;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.4);
+      border-radius: 18px;
+    }
+    .target-item {
+      text-align: center;
+    }
+    .target-item .val {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--primary-orange);
+    }
+    .target-item .lbl {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Category Pill Selector */
+    .category-scroll {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 20px;
+      scrollbar-width: none;
+    }
+    .category-scroll::-webkit-scrollbar { display: none; }
+    .cat-btn {
+      white-space: nowrap;
+      padding: 8px 18px;
+      border-radius: 100px;
+      border: 1px solid var(--glass-border);
+      background: rgba(255, 255, 255, 0.6);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-transform: capitalize;
+      transition: all 0.2s;
+    }
+    .cat-btn.active {
+      background: var(--text-main);
+      color: white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    /* Ingredients Grid */
+    .ingredients-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .ing-card {
+      background: var(--glass-card);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+    .ing-card:hover {
+      background: var(--glass-card-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+    }
+    .ing-card.selected {
+      border-color: var(--primary-orange);
+      background: rgba(255, 245, 240, 0.85);
+    }
+    .ing-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 6px;
+    }
+    .ing-name {
+      font-weight: 700;
+      font-size: 1.05rem;
+      line-height: 1.3;
+    }
+    .ing-price {
+      font-weight: 800;
+      font-size: 1.05rem;
+      color: var(--primary-orange);
+    }
+    .ing-price.free {
+      color: #10B981;
+    }
+    .ing-serving {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+    .counter-ctrl {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 14px;
+      padding: 4px;
+    }
+    .ctrl-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      border: none;
+      background: white;
+      color: var(--text-main);
+      font-size: 1.1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      transition: all 0.2s;
+    }
+    .ctrl-btn:hover { background: var(--primary-orange); color: white; }
+    .ctrl-qty {
+      font-weight: 800;
+      font-size: 1rem;
+      min-width: 32px;
+      text-align: center;
+    }
+
+    /* Floating Real-Time Nutrition Dashboard */
+    .floating-tracker {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 32px);
+      max-width: 900px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(28px) saturate(200%);
+      -webkit-backdrop-filter: blur(28px) saturate(200%);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 14px 20px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15);
+      z-index: 99;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: all 0.3s ease;
+    }
+    .tracker-metrics {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .macro-progress-box {
+      flex: 1;
+      min-width: 60px;
+    }
+    .macro-lbl-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+    .progress-bar-bg {
+      height: 6px;
+      background: rgba(0,0,0,0.08);
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 10px;
+      background: var(--primary-orange);
+      transition: width 0.3s ease, background-color 0.3s;
+    }
+    .progress-bar-fill.over {
+      background: #EF4444;
+    }
+    .tracker-total-action {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(0, 0, 0, 0.05);
+      padding-top: 8px;
+    }
+    .price-total-badge {
+      display: flex;
+      flex-direction: column;
+    }
+    .price-total-val {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--primary-orange);
+      line-height: 1.1;
+    }
+    .price-base-hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .action-btn-group {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-reset {
+      background: rgba(0,0,0,0.05);
+      border: none;
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-reset:hover { background: rgba(0,0,0,0.1); }
+    .btn-checkout {
+      background: var(--primary-orange);
+      color: white;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 14px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 15px var(--primary-glow);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform 0.2s;
+    }
+    .btn-checkout:hover { transform: scale(1.02); }
+
+    /* Order Summary Receipt Page */
+    .receipt-container {
+      max-width: 540px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 28px;
+      padding: 32px 24px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+    .receipt-header {
+      text-align: center;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 2px dashed #E5E5E7;
+    }
+    .receipt-logo {
+      display: inline-block;
+      background: var(--primary-orange);
+      color: white;
+      font-weight: 900;
+      font-size: 1.6rem;
+      padding: 10px 24px;
+      border-radius: 18px;
+      margin-bottom: 12px;
+    }
+    .receipt-screenshot-alert {
+      background: #FFF7ED;
+      border: 1px solid #FFEDD5;
+      color: #C2410C;
+      font-size: 0.9rem;
+      font-weight: 700;
+      padding: 12px;
+      border-radius: 14px;
+      text-align: center;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .summary-nutrition-card {
+      background: #F9FAFB;
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .receipt-table {
+      width: 100%;
+      margin-bottom: 20px;
+      border-collapse: collapse;
+    }
+    .receipt-table td {
+      padding: 10px 4px;
+      font-size: 0.9rem;
+      border-bottom: 1px solid #F3F4F6;
+    }
+    .receipt-total-row td {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--primary-orange);
+      border-top: 2px solid #1D1D1F;
+      border-bottom: none;
+      padding-top: 14px;
+    }
+
+    /* Back-End Admin Modal */
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(10px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      padding: 16px;
+    }
+    .modal-backdrop.active { display: flex; }
+    .admin-card {
+      width: 100%;
+      max-width: 820px;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: white;
+      border-radius: 28px;
+      padding: 28px;
+      box-shadow: 0 24px 48px rgba(0,0,0,0.2);
+    }
+    .admin-tab-btn {
+      padding: 8px 16px;
+      border-radius: 10px;
+      border: 1px solid #E5E5E7;
+      background: white;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .admin-tab-btn.active {
+      background: var(--primary-orange);
+      color: white;
+      border-color: var(--primary-orange);
+    }
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 14px;
+    }
+    .admin-table th, .admin-table td {
+      padding: 8px;
+      border: 1px solid #E5E5E7;
+      text-align: left;
+    }
+    .admin-table input {
+      width: 100%;
+      padding: 6px 8px;
+      font-size: 0.85rem;
+    }
+
+    /* Utility */
+    .hidden { display: none !important; }
+    .badge-pill {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 100px;
+      background: rgba(255, 94, 0, 0.1);
+      color: var(--primary-orange);
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-overlay"></div>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="glass">
+      <div class="logo-container" onclick="showStep(1)">
+        <div class="logo-badge" id="headerLogoText">CHUB CHUB</div>
+        <div>
+          <div class="brand-title" id="siteTitle">Custom Bowl & Nutrition</div>
+          <div class="brand-sub" id="siteSubtitle">คำนวณโภชนาการแม่นยำ เลือกอิ่มได้ตามใจ</div>
+        </div>
+      </div>
+      <button onclick="openAdminLogin()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:6px;">
+        <i data-lucide="settings" style="width: 22px; height: 22px;"></i>
+      </button>
+    </header>
+
+    <!-- Navigation Steps -->
+    <div class="step-tabs glass">
+      <button class="step-tab active" id="tabStep1" onclick="showStep(1)">
+        <i data-lucide="calculator" style="width:18px;"></i> 1. ตั้งเป้าหมาย
+      </button>
+      <button class="step-tab" id="tabStep2" onclick="showStep(2)">
+        <i data-lucide="salad" style="width:18px;"></i> 2. เลือกวัตถุดิบ
+      </button>
+      <button class="step-tab" id="tabStep3" onclick="showStep(3)">
+        <i data-lucide="check-circle" style="width:18px;"></i> 3. สรุปออเดอร์
+      </button>
+    </div>
+
+    <!-- STEP 1: CALCULATE / SET TARGET NUTRITION -->
+    <section id="step1View" class="section-card glass">
+      <div class="section-title">
+        <i data-lucide="sparkles" style="color:var(--primary-orange);"></i>
+        <span id="txtStep1Title">กำหนดเป้าหมายโภชนาการของคุณ</span>
+      </div>
+      <div class="section-desc" id="txtStep1Desc">เลือกให้ระบบคำนวณอัตโนมัติจากค่า BMR/TDEE หรือกำหนดตัวเลขที่ต้องการเอง</div>
+
+      <!-- Mode Selector -->
+      <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <button class="chip-btn active" id="btnModeAuto" onclick="switchTargetMode('auto')">
+          <i data-lucide="cpu" style="width:16px; vertical-align:middle;"></i> คำนวณอัตโนมัติ (BMR/TDEE)
+        </button>
+        <button class="chip-btn" id="btnModeManual" onclick="switchTargetMode('manual')">
+          <i data-lucide="sliders" style="width:16px; vertical-align:middle;"></i> กำหนดเอง (Manual)
+        </button>
+      </div>
+
+      <!-- Auto Form -->
+      <div id="autoTargetForm">
+        <div class="grid-4" style="margin-bottom: 16px;">
+          <div class="form-group">
+            <label>เพศ</label>
+            <select id="calcGender" onchange="calculateBMR()">
+              <option value="male">ชาย (Male)</option>
+              <option value="female">หญิง (Female)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>อายุ (ปี)</label>
+            <input type="number" id="calcAge" value="26" min="10" max="100" oninput="calculateBMR()">
+          </div>
+          <div class="form-group">
+            <label>น้ำหนัก (kg)</label>
+            <input type="number" id="calcWeight" value="65" min="20" max="250" oninput="calculateBMR()">
+          </div>
+          <div class="form-group">
+            <label>ส่วนสูง (cm)</label>
+            <input type="number" id="calcHeight" value="172" min="80" max="250" oninput="calculateBMR()">
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom: 16px;">
+          <div class="form-group">
+            <label>เป้าหมายของคุณ</label>
+            <select id="calcGoal" onchange="calculateBMR()">
+              <option value="lose">ลดไขมัน / ลดน้ำหนัก (Deficit -15%)</option>
+              <option value="maintain" selected>รักษาน้ำหนักเพื่อสุขภาพ (Maintenance)</option>
+              <option value="gain">เพิ่มกล้ามเนื้อ (Surplus +10%)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>ความถี่ในการออกกำลังกาย</label>
+            <select id="calcActivity" onchange="calculateBMR()">
+              <option value="1.2">ไม่ออกกำลังกาย / นั่งทำงานเป็นหลัก</option>
+              <option value="1.375" selected>ออกกำลังกายเบาๆ 1-3 วัน/สัปดาห์</option>
+              <option value="1.55">ออกกำลังกายปานกลาง 3-5 วัน/สัปดาห์</option>
+              <option value="1.725">ออกกำลังกายหนัก 6-7 วัน/สัปดาห์</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" style="max-width: 280px; margin-bottom: 20px;">
+          <label>จำนวนมื้ออาหารที่ทานต่อวัน</label>
+          <select id="calcMeals" onchange="calculateBMR()">
+            <option value="2">2 มื้อ / วัน</option>
+            <option value="3" selected>3 มื้อ / วัน</option>
+            <option value="4">4 มื้อ / วัน</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Manual Form -->
+      <div id="manualTargetForm" class="hidden">
+        <div class="grid-3" style="margin-bottom: 16px;">
+          <div class="form-group">
+            <label>แคลอรี่ต่อมื้อ (Kcal)</label>
+            <input type="number" id="manKcal" value="600" oninput="saveManualTarget()">
+          </div>
+          <div class="form-group">
+            <label>โปรตีนต่อมื้อ (g)</label>
+            <input type="number" id="manProtein" value="45" oninput="saveManualTarget()">
+          </div>
+          <div class="form-group">
+            <label>คาร์โบไฮเดรตต่อมื้อ (g)</label>
+            <input type="number" id="manCarb" value="60" oninput="saveManualTarget()">
+          </div>
+          <div class="form-group">
+            <label>ไขมันต่อมื้อ (g)</label>
+            <input type="number" id="manFat" value="20" oninput="saveManualTarget()">
+          </div>
+          <div class="form-group">
+            <label>ใยอาหารต่อมื้อ (g)</label>
+            <input type="number" id="manFiber" value="8" oninput="saveManualTarget()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Target Display Summary -->
+      <div class="target-bar">
+        <div class="target-item">
+          <div class="val" id="dispTargetKcal">0</div>
+          <div class="lbl">Kcal / มื้อ</div>
+        </div>
+        <div class="target-item">
+          <div class="val" id="dispTargetProtein">0g</div>
+          <div class="lbl">Protein</div>
+        </div>
+        <div class="target-item">
+          <div class="val" id="dispTargetCarb">0g</div>
+          <div class="lbl">Carb</div>
+        </div>
+        <div class="target-item">
+          <div class="val" id="dispTargetFat">0g</div>
+          <div class="lbl">Fat</div>
+        </div>
+        <div class="target-item">
+          <div class="val" id="dispTargetFiber">0g</div>
+          <div class="lbl">Fiber</div>
+        </div>
+      </div>
+
+      <div style="text-align: right; margin-top: 24px;">
+        <button class="btn-checkout" onclick="showStep(2)">
+          ไปเลือกวัตถุดิบ <i data-lucide="arrow-right" style="width:18px;"></i>
+        </button>
+      </div>
+    </section>
+
+    <!-- STEP 2: BUILD YOUR BOWL (MENU SELECTION) -->
+    <section id="step2View" class="hidden">
+      <!-- Category Filter Pills -->
+      <div class="category-scroll" id="categoryScroll">
+        <!-- Rendered by JS -->
+      </div>
+
+      <!-- Ingredients Grid -->
+      <div class="ingredients-grid" id="ingredientsContainer">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+
+    <!-- STEP 3: ORDER SUMMARY & SCREENSHOT RECEIPT -->
+    <section id="step3View" class="hidden">
+      <div class="receipt-container" id="printableReceipt">
+        <div class="receipt-header">
+          <div class="receipt-logo" id="receiptLogo">CHUB CHUB</div>
+          <h2 style="font-size: 1.25rem; font-weight:800; margin-bottom: 4px;">สรุปรายการสั่งอาหาร</h2>
+          <p style="font-size: 0.8rem; color: var(--text-muted);" id="receiptTimestamp">-</p>
+        </div>
+
+        <div class="receipt-screenshot-alert">
+          <i data-lucide="camera" style="width: 20px;"></i>
+          <span id="txtScreenshotAlert">บันทึกหน้าจอนี้เพื่อใช้ในการสั่งออเดอร์</span>
+        </div>
+
+        <!-- Macro Comparison Card -->
+        <div class="summary-nutrition-card">
+          <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 10px; display:flex; justify-content:space-between;">
+            <span>เปรียบเทียบโภชนาการ</span>
+            <span class="badge-pill">เป้าหมาย vs ที่เลือกจริง</span>
+          </div>
+          <table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;">
+            <thead>
+              <tr style="color: var(--text-muted); text-align: left;">
+                <th style="padding: 4px 0;">สารอาหาร</th>
+                <th style="text-align: right;">ที่เลือกจริง</th>
+                <th style="text-align: right;">เป้าหมาย</th>
+              </tr>
+            </thead>
+            <tbody id="receiptNutritionTable">
+              <!-- Rendered by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Selected Items Breakdown -->
+        <table class="receipt-table">
+          <thead>
+            <tr style="font-size: 0.8rem; color: var(--text-muted); text-align: left;">
+              <th>รายการ</th>
+              <th style="text-align: center;">เสิร์ฟ</th>
+              <th style="text-align: right;">ราคา</th>
+            </tr>
+          </thead>
+          <tbody id="receiptItemsTable">
+            <!-- Rendered by JS -->
+          </tbody>
+          <tfoot>
+            <tr class="receipt-total-row">
+              <td colspan="2">ยอดชำระสุทธิ (รวมค่าเริ่มต้น)</td>
+              <td style="text-align: right;" id="receiptFinalTotal">฿0</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <!-- Actions -->
+        <div style="display: flex; gap: 10px; margin-top: 24px;">
+          <button class="btn-reset" style="flex: 1; justify-content: center; padding: 12px;" onclick="showStep(2)">
+            <i data-lucide="edit-3" style="width: 16px;"></i> กลับไปแก้ไข
+          </button>
+          <button class="btn-checkout" style="flex: 1; justify-content: center; padding: 12px;" onclick="captureReceipt()">
+            <i data-lucide="download" style="width: 16px;"></i> บันทึกเป็นรูปภาพ
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- FLOATING REAL-TIME NUTRITION TRACKER (FOR STEP 2) -->
+  <div class="floating-tracker" id="floatingTracker">
+    <div class="tracker-metrics">
+      <!-- Kcal -->
+      <div class="macro-progress-box">
+        <div class="macro-lbl-row">
+          <span>Kcal</span>
+          <span id="trkKcalVal">0/0</span>
+        </div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="barKcal" style="width: 0%"></div></div>
+      </div>
+      <!-- Protein -->
+      <div class="macro-progress-box">
+        <div class="macro-lbl-row">
+          <span>Protein</span>
+          <span id="trkProteinVal">0/0g</span>
+        </div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="barProtein" style="width: 0%"></div></div>
+      </div>
+      <!-- Carb -->
+      <div class="macro-progress-box">
+        <div class="macro-lbl-row">
+          <span>Carb</span>
+          <span id="trkCarbVal">0/0g</span>
+        </div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="barCarb" style="width: 0%"></div></div>
+      </div>
+      <!-- Fat -->
+      <div class="macro-progress-box">
+        <div class="macro-lbl-row">
+          <span>Fat</span>
+          <span id="trkFatVal">0/0g</span>
+        </div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="barFat" style="width: 0%"></div></div>
+      </div>
+      <!-- Fiber -->
+      <div class="macro-progress-box">
+        <div class="macro-lbl-row">
+          <span>Fiber</span>
+          <span id="trkFiberVal">0/0g</span>
+        </div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="barFiber" style="width: 0%"></div></div>
+      </div>
+    </div>
+
+    <!-- Tracker Actions & Total -->
+    <div class="tracker-total-action">
+      <div class="price-total-badge">
+        <div class="price-total-val" id="trkTotalPrice">฿59</div>
+        <div class="price-base-hint" id="trkBaseHint">รวมค่าเริ่มต้น ฿59 แล้ว</div>
+      </div>
+      <div class="action-btn-group">
+        <button class="btn-reset" onclick="resetSelections()">
+          <i data-lucide="rotate-ccw" style="width: 14px;"></i> รีเซ็ต
+        </button>
+        <button class="btn-checkout" onclick="showStep(3)">
+          สรุปออเดอร์ <i data-lucide="check" style="width: 16px;"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN LOGIN MODAL -->
+  <div class="modal-backdrop" id="adminLoginModal">
+    <div class="glass" style="max-width: 360px; width: 100%; padding: 28px; background: white; border-radius: 24px; text-align: center;">
+      <i data-lucide="lock" style="width: 38px; height: 38px; color: var(--primary-orange); margin-bottom: 12px;"></i>
+      <h3 style="margin-bottom: 6px;">ระบบจัดการหลังบ้าน</h3>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 18px;">กรุณากรอกรหัส PIN 4 หลัก</p>
+      <input type="password" id="adminPinInput" maxlength="4" placeholder="••••" style="text-align: center; font-size: 1.6rem; letter-spacing: 12px; margin-bottom: 18px; width: 180px;">
+      <div style="display: flex; gap: 8px;">
+        <button class="btn-reset" style="flex: 1; justify-content: center;" onclick="closeAdminLogin()">ยกเลิก</button>
+        <button class="btn-checkout" style="flex: 1; justify-content: center;" onclick="verifyAdminPin()">เข้าสู่ระบบ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN DASHBOARD PANEL -->
+  <div class="modal-backdrop" id="adminPanelModal">
+    <div class="admin-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>🛠️ CHUB CHUB Back-End Management</h2>
+        <button onclick="closeAdminPanel()" style="background: none; border: none; cursor: pointer;">
+          <i data-lucide="x" style="width: 24px;"></i>
+        </button>
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid #E5E5E7; padding-bottom: 12px;">
+        <button class="admin-tab-btn active" id="admTabIng" onclick="switchAdminTab('ingredients')">จัดการวัตถุดิบ & โภชนาการ</button>
+        <button class="admin-tab-btn" id="admTabContent" onclick="switchAdminTab('content')">ข้อความ & รูปพื้นหลัง</button>
+        <button class="admin-tab-btn" id="admTabReset" onclick="restoreDefaults()" style="color: #EF4444;">รีเซ็ตค่าเริ่มต้น</button>
+      </div>
+
+      <!-- Tab 1: Ingredients CMS -->
+      <div id="admViewIngredients">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <span style="font-size: 0.85rem; color: var(--text-muted);">แก้ไขค่าโภชนาการ ปริมาณเสิร์ฟ และราคา (แก้ไขแล้วกด "บันทึกข้อมูลทั้งหมด")</span>
+          <button class="btn-checkout" style="padding: 6px 14px; font-size: 0.85rem;" onclick="addNewIngredientPrompt()">+ เพิ่มวัตถุดิบใหม่</button>
+        </div>
+        <div style="overflow-x: auto; max-height: 55vh;">
+          <table class="admin-table">
+            <thead>
+              <tr style="background: #F9FAFB;">
+                <th>หมวด</th>
+                <th>ชื่อวัตถุดิบ</th>
+                <th>เสิร์ฟ</th>
+                <th>ราคา (฿)</th>
+                <th>Kcal</th>
+                <th>Protein (g)</th>
+                <th>Carb (g)</th>
+                <th>Fat (g)</th>
+                <th>Fiber (g)</th>
+                <th>ลบ</th>
+              </tr>
+            </thead>
+            <tbody id="adminIngredientsTableBody">
+              <!-- Rendered by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab 2: Content & Background CMS -->
+      <div id="admViewContent" class="hidden">
+        <div class="grid-2" style="margin-bottom: 16px;">
+          <div class="form-group">
+            <label>รูปภาพพื้นหลัง (URL รูปภาพ)</label>
+            <input type="text" id="cfgBgUrl" placeholder="https://images.unsplash.com/...">
+          </div>
+          <div class="form-group">
+            <label>ราคาเริ่มต้น (Base Bowl Price - บาท)</label>
+            <input type="number" id="cfgBasePrice" value="59">
+          </div>
+          <div class="form-group">
+            <label>ข้อความโลโก้ (Brand Logo Text)</label>
+            <input type="text" id="cfgLogoText" value="CHUB CHUB">
+          </div>
+          <div class="form-group">
+            <label>ชื่อหัวเว็บ (Site Title)</label>
+            <input type="text" id="cfgSiteTitle">
+          </div>
+          <div class="form-group">
+            <label>คำโปรยเว็บ (Site Subtitle)</label>
+            <input type="text" id="cfgSiteSubtitle">
+          </div>
+          <div class="form-group">
+            <label>ข้อความแจ้งเตือนแคปเจอร์หน้าจอ</label>
+            <input type="text" id="cfgScreenshotAlert">
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 24px; text-align: right; border-top: 1px solid #E5E5E7; padding-top: 16px;">
+        <button class="btn-checkout" onclick="saveAdminChanges()">บันทึกข้อมูลทั้งหมด</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ============================================================
+       DEFAULT DATA (เมนูและสูตรโภชนาการ)
+       ============================================================ */
+    const DEFAULT_CONFIG = {
+      basePrice: 59,
+      logoText: "CHUB CHUB",
+      siteTitle: "Custom Bowl & Nutrition",
+      siteSubtitle: "คำนวณโภชนาการแม่นยำ เลือกอิ่มได้ตามใจ",
+      screenshotAlert: "บันทึกหน้าจอนี้เพื่อใช้ในการสั่งออเดอร์",
+      bgUrl: "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?q=80&w=2070&auto=format&fit=crop"
+    };
+
+    const DEFAULT_INGREDIENTS = [
+      // PROTEINS
+      { id: 'p1', cat: 'proteins', name: 'Blackened Chicken', serving: '80 g', price: 59, kcal: 156, p: 17.2, c: 1.6, f: 9.2, fib: 0.5 },
+      { id: 'p2', cat: 'proteins', name: 'Sous Vide Chicken Breast', serving: '80 g', price: 49, kcal: 102, p: 24.8, c: 0.4, f: 0.8, fib: 0.1 },
+      { id: 'p3', cat: 'proteins', name: 'Boiled Shrimp', serving: '3 pieces', price: 69, kcal: 65, p: 14.0, c: 0.2, f: 0.6, fib: 0 },
+      { id: 'p4', cat: 'proteins', name: 'Minced Beef Nachos', serving: '50 g', price: 49, kcal: 126, p: 11.2, c: 1.4, f: 8.6, fib: 0.4 },
+      { id: 'p5', cat: 'proteins', name: 'Chickpeas', serving: '50 g', price: 15, kcal: 82, p: 4.5, c: 13.7, f: 1.3, fib: 3.8 },
+      { id: 'p6', cat: 'proteins', name: 'Boiled Egg', serving: '1 piece', price: 9, kcal: 74, p: 6.3, c: 0.4, f: 5.0, fib: 0 },
+
+      // GREENS
+      { id: 'g1', cat: 'greens', name: 'Butterhead Lettuce', serving: '50 g', price: 0, kcal: 8, p: 0.6, c: 1.1, f: 0.1, fib: 0.6 },
+      { id: 'g2', cat: 'greens', name: 'Baby Cos Lettuce', serving: '50 g', price: 0, kcal: 9, p: 0.8, c: 1.4, f: 0.2, fib: 1.0 },
+      { id: 'g3', cat: 'greens', name: 'Green Oak Lettuce', serving: '30 g', price: 0, kcal: 5, p: 0.4, c: 0.8, f: 0.1, fib: 0.5 },
+      { id: 'g4', cat: 'greens', name: 'Kale', serving: '30 g', price: 15, kcal: 15, p: 1.3, c: 2.7, f: 0.3, fib: 1.2 },
+      { id: 'g5', cat: 'greens', name: 'Arugula', serving: '20 g', price: 15, kcal: 5, p: 0.5, c: 0.7, f: 0.1, fib: 0.3 },
+
+      // CRUNCH
+      { id: 'c1', cat: 'crunch', name: 'Crispy Chicken Skin', serving: '20 g', price: 19, kcal: 115, p: 8.0, c: 0.2, f: 9.4, fib: 0 },
+      { id: 'c2', cat: 'crunch', name: 'Crispy Bacon', serving: '10 g', price: 19, kcal: 54, p: 3.7, c: 0.1, f: 4.2, fib: 0 },
+      { id: 'c3', cat: 'crunch', name: 'Corn Chips', serving: '20 g', price: 19, kcal: 98, p: 1.4, c: 13.2, f: 4.8, fib: 1.1 },
+      { id: 'c4', cat: 'crunch', name: 'Crispy Whole Wheat', serving: '20 g', price: 15, kcal: 78, p: 2.6, c: 14.5, f: 1.2, fib: 2.2 },
+      { id: 'c5', cat: 'crunch', name: 'Crispy Shallots', serving: '15 g', price: 9, kcal: 72, p: 0.9, c: 6.8, f: 4.8, fib: 0.6 },
+
+      // VEGGIES
+      { id: 'v1', cat: 'veggies', name: 'Quinoa', serving: '50 g', price: 25, kcal: 60, p: 2.2, c: 10.7, f: 1.0, fib: 1.4 },
+      { id: 'v2', cat: 'veggies', name: 'Japanese Pumpkin', serving: '100 g', price: 19, kcal: 45, p: 1.2, c: 10.5, f: 0.1, fib: 1.8 },
+      { id: 'v3', cat: 'veggies', name: 'Sweet Corn', serving: '50 g', price: 15, kcal: 43, p: 1.6, c: 9.5, f: 0.6, fib: 1.2 },
+      { id: 'v4', cat: 'veggies', name: 'Edamame', serving: '30 g', price: 15, kcal: 36, p: 3.6, c: 2.7, f: 1.5, fib: 1.5 },
+      { id: 'v5', cat: 'veggies', name: 'Cherry Tomatoes', serving: '50 g', price: 15, kcal: 9, p: 0.5, c: 1.9, f: 0.1, fib: 0.6 },
+      { id: 'v6', cat: 'veggies', name: 'White Beans', serving: '50 g', price: 9, kcal: 69, p: 4.8, c: 12.5, f: 0.3, fib: 3.1 },
+      { id: 'v7', cat: 'veggies', name: 'Shredded Carrots', serving: '30 g', price: 0, kcal: 12, p: 0.3, c: 2.9, f: 0.1, fib: 0.8 },
+      { id: 'v8', cat: 'veggies', name: 'Red Onions', serving: '30 g', price: 0, kcal: 12, p: 0.3, c: 2.8, f: 0, fib: 0.5 },
+      { id: 'v9', cat: 'veggies', name: 'Japanese Cucumber', serving: '30 g', price: 0, kcal: 5, p: 0.2, c: 1.1, f: 0, fib: 0.3 },
+      { id: 'v10', cat: 'veggies', name: 'Radish', serving: '30 g', price: 0, kcal: 5, p: 0.2, c: 1.0, f: 0, fib: 0.5 },
+
+      // TOPPINGS
+      { id: 't1', cat: 'toppings', name: 'Feta Cheese', serving: '10 g', price: 29, kcal: 26, p: 1.4, c: 0.4, f: 2.1, fib: 0 },
+      { id: 't2', cat: 'toppings', name: 'Parmesan Cheese', serving: '10 g', price: 29, kcal: 43, p: 3.8, c: 0.4, f: 2.9, fib: 0 },
+      { id: 't3', cat: 'toppings', name: 'Olive Oil', serving: '20 ml', price: 29, kcal: 168, p: 0, c: 0, f: 18.4, fib: 0 },
+      { id: 't4', cat: 'toppings', name: 'Black Olives', serving: '10 g', price: 19, kcal: 12, p: 0.1, c: 0.6, f: 1.1, fib: 0.3 },
+      { id: 't5', cat: 'toppings', name: 'Sliced Almonds', serving: '15 g', price: 15, kcal: 87, p: 3.2, c: 3.3, f: 7.4, fib: 1.8 },
+      { id: 't6', cat: 'toppings', name: 'Cashew Nuts', serving: '15 g', price: 15, kcal: 83, p: 2.7, c: 4.5, f: 6.6, fib: 0.5 },
+      { id: 't7', cat: 'toppings', name: 'Walnuts', serving: '15 g', price: 15, kcal: 98, p: 2.3, c: 2.1, f: 9.8, fib: 1.0 },
+      { id: 't8', cat: 'toppings', name: 'Pumpkin Seeds', serving: '15 g', price: 15, kcal: 85, p: 4.5, c: 2.0, f: 7.4, fib: 1.0 },
+
+      // DRESSING
+      { id: 'd1', cat: 'dressing', name: 'Chipotle', serving: '50 ml', price: 19, kcal: 230, p: 0.5, c: 6.4, f: 23.0, fib: 0.4 },
+      { id: 'd2', cat: 'dressing', name: 'Honey Mustard', serving: '50 ml', price: 9, kcal: 158, p: 1.2, c: 15.2, f: 10.5, fib: 0.5 },
+      { id: 'd3', cat: 'dressing', name: 'Olive oil & Balsamic', serving: '30 ml', price: 9, kcal: 148, p: 0.1, c: 4.2, f: 14.8, fib: 0.1 },
+      { id: 'd4', cat: 'dressing', name: 'Caesar', serving: '50 ml', price: 9, kcal: 195, p: 1.5, c: 2.2, f: 20.8, fib: 0.1 },
+      { id: 'd5', cat: 'dressing', name: 'Gochujang', serving: '50 ml', price: 0, kcal: 164, p: 1.8, c: 15.6, f: 10.8, fib: 0.8 },
+      { id: 'd6', cat: 'dressing', name: 'Miso Sesame', serving: '50 ml', price: 0, kcal: 242, p: 2.6, c: 8.6, f: 22.4, fib: 0.9 },
+
+      // DRINKS
+      { id: 'dr1', cat: 'drinks', name: 'Mineral Water', serving: '1 bottle', price: 15, kcal: 0, p: 0, c: 0, f: 0, fib: 0 },
+      { id: 'dr2', cat: 'drinks', name: 'Coke Zero', serving: '1 can', price: 20, kcal: 0, p: 0, c: 0, f: 0, fib: 0 },
+      { id: 'dr3', cat: 'drinks', name: 'Cold Brew Coffee', serving: '1 cup', price: 50, kcal: 5, p: 0.3, c: 0, f: 0, fib: 0 },
+      { id: 'dr4', cat: 'drinks', name: 'Clear Matcha', serving: '1 cup', price: 50, kcal: 12, p: 0.8, c: 1.5, f: 0.1, fib: 0.5 },
+      { id: 'dr5', cat: 'drinks', name: 'Matcha Latte Oatmilk', serving: '1 cup', price: 60, kcal: 135, p: 2.5, c: 22.0, f: 4.2, fib: 1.8 }
+    ];
+
+    const CATEGORIES = ['all', 'proteins', 'greens', 'crunch', 'veggies', 'toppings', 'dressing', 'drinks'];
+
+    /* ============================================================
+       APPLICATION STATE
+       ============================================================ */
+    let siteConfig = JSON.parse(localStorage.getItem('chub_config')) || DEFAULT_CONFIG;
+    let ingredients = JSON.parse(localStorage.getItem('chub_ingredients')) || DEFAULT_INGREDIENTS;
+    let selectedCart = {};
+    let activeCategory = 'all';
+
+    let targetNutrition = {
+      mode: 'auto',
+      kcal: 600,
+      protein: 45,
+      carb: 60,
+      fat: 20,
+      fiber: 8
+    };
+
+    /* ============================================================
+       INITIALIZATION
+       ============================================================ */
+    window.addEventListener('DOMContentLoaded', () => {
+      applyConfigToUI();
+      calculateBMR();
+      renderCategoryButtons();
+      renderIngredients();
+      updateTrackerDashboard();
+      lucide.createIcons();
+    });
+
+    function applyConfigToUI() {
+      document.body.style.backgroundImage = `url('${siteConfig.bgUrl}')`;
+      document.getElementById('headerLogoText').innerText = siteConfig.logoText;
+      document.getElementById('receiptLogo').innerText = siteConfig.logoText;
+      document.getElementById('siteTitle').innerText = siteConfig.siteTitle;
+      document.getElementById('siteSubtitle').innerText = siteConfig.siteSubtitle;
+      document.getElementById('txtScreenshotAlert').innerText = siteConfig.screenshotAlert;
+      document.getElementById('trkBaseHint').innerText = `รวมค่าเริ่มต้น ฿${siteConfig.basePrice} แล้ว`;
+    }
+
+    /* ============================================================
+       STEP NAVIGATION
+       ============================================================ */
+    function showStep(stepNum) {
+      document.getElementById('step1View').classList.add('hidden');
+      document.getElementById('step2View').classList.add('hidden');
+      document.getElementById('step3View').classList.add('hidden');
+
+      document.getElementById('tabStep1').classList.remove('active');
+      document.getElementById('tabStep2').classList.remove('active');
+      document.getElementById('tabStep3').classList.remove('active');
+
+      const tracker = document.getElementById('floatingTracker');
+
+      if (stepNum === 1) {
+        document.getElementById('step1View').classList.remove('hidden');
+        document.getElementById('tabStep1').classList.add('active');
+        tracker.classList.add('hidden');
+      } else if (stepNum === 2) {
+        document.getElementById('step2View').classList.remove('hidden');
+        document.getElementById('tabStep2').classList.add('active');
+        tracker.classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (stepNum === 3) {
+        document.getElementById('step3View').classList.remove('hidden');
+        document.getElementById('tabStep3').classList.add('active');
+        tracker.classList.add('hidden');
+        buildReceipt();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      lucide.createIcons();
+    }
+
+    /* ============================================================
+       STEP 1: NUTRITION CALCULATIONS (BMR / TDEE)
+       ============================================================ */
+    function switchTargetMode(mode) {
+      targetNutrition.mode = mode;
+      if (mode === 'auto') {
+        document.getElementById('btnModeAuto').classList.add('active');
+        document.getElementById('btnModeManual').classList.remove('active');
+        document.getElementById('autoTargetForm').classList.remove('hidden');
+        document.getElementById('manualTargetForm').classList.add('hidden');
+        calculateBMR();
+      } else {
+        document.getElementById('btnModeAuto').classList.remove('active');
+        document.getElementById('btnModeManual').classList.add('active');
+        document.getElementById('autoTargetForm').classList.add('hidden');
+        document.getElementById('manualTargetForm').classList.remove('hidden');
+        saveManualTarget();
+      }
+    }
+
+    function calculateBMR() {
+      if (targetNutrition.mode !== 'auto') return;
+
+      const gender = document.getElementById('calcGender').value;
+      const age = parseFloat(document.getElementById('calcAge').value) || 25;
+      const weight = parseFloat(document.getElementById('calcWeight').value) || 65;
+      const height = parseFloat(document.getElementById('calcHeight').value) || 170;
+      const activity = parseFloat(document.getElementById('calcActivity').value) || 1.375;
+      const goal = document.getElementById('calcGoal').value;
+      const meals = parseFloat(document.getElementById('calcMeals').value) || 3;
+
+      let bmr = (10 * weight) + (6.25 * height) - (5 * age);
+      bmr += (gender === 'male') ? 5 : -161;
+
+      let tdee = bmr * activity;
+
+      if (goal === 'lose') tdee *= 0.85;
+      else if (goal === 'gain') tdee *= 1.10;
+
+      const perMealKcal = Math.round(tdee / meals);
+      const totalDailyProtein = weight * 2.0;
+      const perMealProtein = Math.round(totalDailyProtein / meals);
+
+      const perMealFat = Math.round((perMealKcal * 0.25) / 9);
+      const perMealCarb = Math.max(10, Math.round((perMealKcal - (perMealProtein * 4) - (perMealFat * 9)) / 4));
+      const perMealFiber = Math.round(28 / meals);
+
+      targetNutrition.kcal = perMealKcal;
+      targetNutrition.protein = perMealProtein;
+      targetNutrition.carb = perMealCarb;
+      targetNutrition.fat = perMealFat;
+      targetNutrition.fiber = perMealFiber;
+
+      updateTargetDisplay();
+      updateTrackerDashboard();
+    }
+
+    function saveManualTarget() {
+      targetNutrition.kcal = parseFloat(document.getElementById('manKcal').value) || 0;
+      targetNutrition.protein = parseFloat(document.getElementById('manProtein').value) || 0;
+      targetNutrition.carb = parseFloat(document.getElementById('manCarb').value) || 0;
+      targetNutrition.fat = parseFloat(document.getElementById('manFat').value) || 0;
+      targetNutrition.fiber = parseFloat(document.getElementById('manFiber').value) || 0;
+
+      updateTargetDisplay();
+      updateTrackerDashboard();
+    }
+
+    function updateTargetDisplay() {
+      document.getElementById('dispTargetKcal').innerText = targetNutrition.kcal;
+      document.getElementById('dispTargetProtein').innerText = targetNutrition.protein + 'g';
+      document.getElementById('dispTargetCarb').innerText = targetNutrition.carb + 'g';
+      document.getElementById('dispTargetFat').innerText = targetNutrition.fat + 'g';
+      document.getElementById('dispTargetFiber').innerText = targetNutrition.fiber + 'g';
+    }
+
+    /* ============================================================
+       STEP 2: INGREDIENTS SELECTION & CART MANAGEMENT
+       ============================================================ */
+    function renderCategoryButtons() {
+      const wrapper = document.getElementById('categoryScroll');
+      wrapper.innerHTML = CATEGORIES.map(cat => `
+        <button class="cat-btn ${cat === activeCategory ? 'active' : ''}" onclick="setCategory('${cat}')">
+          ${cat === 'all' ? '🍽️ ทั้งหมด' : cat}
+        </button>
+      `).join('');
+    }
+
+    function setCategory(cat) {
+      activeCategory = cat;
+      renderCategoryButtons();
+      renderIngredients();
+    }
+
+    /* [แก้ไขจุดที่ 1] แสดงเฉพาะ: ชื่อวัตถุดิบ, ปริมาณเสิร์ฟ, ราคา */
+    function renderIngredients() {
+      const container = document.getElementById('ingredientsContainer');
+      const filtered = activeCategory === 'all' 
+        ? ingredients 
+        : ingredients.filter(i => i.cat === activeCategory);
+
+      container.innerHTML = filtered.map(item => {
+        const qty = selectedCart[item.id] || 0;
+        const isFree = item.price === 0;
+        return `
+          <div class="ing-card ${qty > 0 ? 'selected' : ''}" id="card_${item.id}">
+            <div>
+              <div class="ing-header">
+                <span class="ing-name">${item.name}</span>
+                <span class="ing-price ${isFree ? 'free' : ''}">${isFree ? 'FREE' : '฿' + item.price}</span>
+              </div>
+              <div class="ing-serving">${item.serving}</div>
+            </div>
+            <div class="counter-ctrl">
+              <button class="ctrl-btn" onclick="modifyQty('${item.id}', -1)">-</button>
+              <span class="ctrl-qty" id="qty_${item.id}">${qty}</span>
+              <button class="ctrl-btn" onclick="modifyQty('${item.id}', 1)">+</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function modifyQty(id, delta) {
+      const cur = selectedCart[id] || 0;
+      const next = Math.max(0, cur + delta);
+      if (next === 0) {
+        delete selectedCart[id];
+      } else {
+        selectedCart[id] = next;
+      }
+
+      const card = document.getElementById(`card_${id}`);
+      const qtyElem = document.getElementById(`qty_${id}`);
+      if (card && qtyElem) {
+        qtyElem.innerText = next;
+        if (next > 0) card.classList.add('selected');
+        else card.classList.remove('selected');
+      }
+
+      updateTrackerDashboard();
+    }
+
+    function resetSelections() {
+      if (confirm("ต้องการรีเซ็ตวัตถุดิบทั้งหมดที่เลือกไว้หรือไม่?")) {
+        selectedCart = {};
+        renderIngredients();
+        updateTrackerDashboard();
+      }
+    }
+
+    /* ============================================================
+       REAL-TIME FLOATING NUTRITION DASHBOARD
+       ============================================================ */
+    function calculateCartTotals() {
+      let totals = { kcal: 0, p: 0, c: 0, f: 0, fib: 0, ingredientsPrice: 0 };
+      for (const [id, qty] of Object.entries(selectedCart)) {
+        const item = ingredients.find(i => i.id === id);
+        if (item && qty > 0) {
+          totals.kcal += item.kcal * qty;
+          totals.p += item.p * qty;
+          totals.c += item.c * qty;
+          totals.f += item.f * qty;
+          totals.fib += item.fib * qty;
+          totals.ingredientsPrice += item.price * qty;
+        }
+      }
+      totals.p = Math.round(totals.p * 10) / 10;
+      totals.c = Math.round(totals.c * 10) / 10;
+      totals.f = Math.round(totals.f * 10) / 10;
+      totals.fib = Math.round(totals.fib * 10) / 10;
+      totals.grandTotal = totals.ingredientsPrice + siteConfig.basePrice;
+      return totals;
+    }
+
+    function updateTrackerDashboard() {
+      const totals = calculateCartTotals();
+
+      document.getElementById('trkKcalVal').innerText = `${totals.kcal} / ${targetNutrition.kcal}`;
+      document.getElementById('trkProteinVal').innerText = `${totals.p} / ${targetNutrition.protein}g`;
+      document.getElementById('trkCarbVal').innerText = `${totals.c} / ${targetNutrition.carb}g`;
+      document.getElementById('trkFatVal').innerText = `${totals.f} / ${targetNutrition.fat}g`;
+      document.getElementById('trkFiberVal').innerText = `${totals.fib} / ${targetNutrition.fiber}g`;
+
+      updateProgress('barKcal', totals.kcal, targetNutrition.kcal);
+      updateProgress('barProtein', totals.p, targetNutrition.protein);
+      updateProgress('barCarb', totals.c, targetNutrition.carb);
+      updateProgress('barFat', totals.fat, targetNutrition.fat);
+      updateProgress('barFiber', totals.fib, targetNutrition.fiber);
+
+      document.getElementById('trkTotalPrice').innerText = `฿${totals.grandTotal}`;
+    }
+
+    function updateProgress(elemId, actual, target) {
+      const bar = document.getElementById(elemId);
+      if (!bar) return;
+      const ratio = target > 0 ? (actual / target) * 100 : 0;
+      bar.style.width = `${Math.min(100, ratio)}%`;
+      if (ratio > 115) {
+        bar.classList.add('over');
+      } else {
+        bar.classList.remove('over');
+      }
+    }
+
+    /* ============================================================
+       STEP 3: ORDER SUMMARY & SCREENSHOT RECEIPT
+       ============================================================ */
+    /* [แก้ไขจุดที่ 2] ตัดคำว่า "ผักสลัดพื้นฐาน + ภาชนะ" ออก */
+    function buildReceipt() {
+      const totals = calculateCartTotals();
+      const now = new Date();
+      document.getElementById('receiptTimestamp').innerText = `วันที่ ${now.toLocaleDateString('th-TH')} เวลา ${now.toLocaleTimeString('th-TH')}`;
+
+      // Comparison Table
+      const nutTable = document.getElementById('receiptNutritionTable');
+      nutTable.innerHTML = `
+        <tr><td>แคลอรี่ (Kcal)</td><td style="text-align:right; font-weight:700;">${totals.kcal}</td><td style="text-align:right; color:var(--text-muted);">${targetNutrition.kcal}</td></tr>
+        <tr><td>โปรตีน (Protein)</td><td style="text-align:right; font-weight:700;">${totals.p}g</td><td style="text-align:right; color:var(--text-muted);">${targetNutrition.protein}g</td></tr>
+        <tr><td>คาร์โบไฮเดรต (Carb)</td><td style="text-align:right; font-weight:700;">${totals.c}g</td><td style="text-align:right; color:var(--text-muted);">${targetNutrition.carb}g</td></tr>
+        <tr><td>ไขมัน (Fat)</td><td style="text-align:right; font-weight:700;">${totals.f}g</td><td style="text-align:right; color:var(--text-muted);">${targetNutrition.fat}g</td></tr>
+        <tr><td>ใยอาหาร (Fiber)</td><td style="text-align:right; font-weight:700;">${totals.fib}g</td><td style="text-align:right; color:var(--text-muted);">${targetNutrition.fiber}g</td></tr>
+      `;
+
+      // Items Table
+      const itemsTable = document.getElementById('receiptItemsTable');
+      let rows = `
+        <tr>
+          <td><strong>ชามสลัดเริ่มต้น (Base Bowl)</strong></td>
+          <td style="text-align:center;">1</td>
+          <td style="text-align:right; font-weight:700;">฿${siteConfig.basePrice}</td>
+        </tr>
+      `;
+
+      for (const [id, qty] of Object.entries(selectedCart)) {
+        const item = ingredients.find(i => i.id === id);
+        if (item && qty > 0) {
+          const itemPriceTotal = item.price * qty;
+          rows += `
+            <tr>
+              <td>${item.name}<br><small style="color:var(--text-muted);">${item.serving}</small></td>
+              <td style="text-align:center;">${qty}</td>
+              <td style="text-align:right; font-weight:700;">${item.price === 0 ? 'FREE' : '฿' + itemPriceTotal}</td>
+            </tr>
+          `;
+        }
+      }
+
+      itemsTable.innerHTML = rows;
+      document.getElementById('receiptFinalTotal').innerText = `฿${totals.grandTotal}`;
+    }
+
+    function captureReceipt() {
+      const receiptElem = document.getElementById('printableReceipt');
+      html2canvas(receiptElem, { scale: 2, useCORS: true }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `CHUB-CHUB-Order-${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      });
+    }
+
+    /* ============================================================
+       BACK-END / ADMIN MANAGEMENT (PIN: 0682)
+       ============================================================ */
+    function openAdminLogin() {
+      document.getElementById('adminPinInput').value = '';
+      document.getElementById('adminLoginModal').classList.add('active');
+      document.getElementById('adminPinInput').focus();
+    }
+
+    function closeAdminLogin() {
+      document.getElementById('adminLoginModal').classList.remove('active');
+    }
+
+    function verifyAdminPin() {
+      const pin = document.getElementById('adminPinInput').value;
+      if (pin === "0682") {
+        closeAdminLogin();
+        openAdminPanel();
+      } else {
+        alert("รหัสผ่านไม่ถูกต้อง! กรุณาลองใหม่อีกครั้ง");
+        document.getElementById('adminPinInput').value = '';
+      }
+    }
+
+    function openAdminPanel() {
+      document.getElementById('adminPanelModal').classList.add('active');
+      renderAdminIngredientsTable();
+      loadContentConfig();
+    }
+
+    function closeAdminPanel() {
+      document.getElementById('adminPanelModal').classList.remove('active');
+    }
+
+    function switchAdminTab(tab) {
+      document.getElementById('admTabIng').classList.remove('active');
+      document.getElementById('admTabContent').classList.remove('active');
+      document.getElementById('admViewIngredients').classList.add('hidden');
+      document.getElementById('admViewContent').classList.add('hidden');
+
+      if (tab === 'ingredients') {
+        document.getElementById('admTabIng').classList.add('active');
+        document.getElementById('admViewIngredients').classList.remove('hidden');
+      } else if (tab === 'content') {
+        document.getElementById('admTabContent').classList.add('active');
+        document.getElementById('admViewContent').classList.remove('hidden');
+      }
+    }
+
+    function renderAdminIngredientsTable() {
+      const tbody = document.getElementById('adminIngredientsTableBody');
+      tbody.innerHTML = ingredients.map((item, idx) => `
+        <tr>
+          <td><input type="text" id="admCat_${idx}" value="${item.cat}"></td>
+          <td><input type="text" id="admName_${idx}" value="${item.name}"></td>
+          <td><input type="text" id="admServ_${idx}" value="${item.serving}"></td>
+          <td><input type="number" id="admPrice_${idx}" value="${item.price}"></td>
+          <td><input type="number" id="admKcal_${idx}" value="${item.kcal}"></td>
+          <td><input type="number" step="0.1" id="admP_${idx}" value="${item.p}"></td>
+          <td><input type="number" step="0.1" id="admC_${idx}" value="${item.c}"></td>
+          <td><input type="number" step="0.1" id="admF_${idx}" value="${item.f}"></td>
+          <td><input type="number" step="0.1" id="admFib_${idx}" value="${item.fib}"></td>
+          <td><button onclick="deleteIngredient(${idx})" style="color:red; border:none; background:none; cursor:pointer;">ลบ</button></td>
+        </tr>
+      `).join('');
+    }
+
+    function loadContentConfig() {
+      document.getElementById('cfgBgUrl').value = siteConfig.bgUrl;
+      document.getElementById('cfgBasePrice').value = siteConfig.basePrice;
+      document.getElementById('cfgLogoText').value = siteConfig.logoText;
+      document.getElementById('cfgSiteTitle').value = siteConfig.siteTitle;
+      document.getElementById('cfgSiteSubtitle').value = siteConfig.siteSubtitle;
+      document.getElementById('cfgScreenshotAlert').value = siteConfig.screenshotAlert;
+    }
+
+    function addNewIngredientPrompt() {
+      const name = prompt("ระบุชื่อวัตถุดิบใหม่:");
+      if (!name) return;
+      ingredients.unshift({
+        id: 'custom_' + Date.now(),
+        cat: 'proteins',
+        name: name,
+        serving: '50 g',
+        price: 20,
+        kcal: 50,
+        p: 5,
+        c: 5,
+        f: 1,
+        fib: 1
+      });
+      renderAdminIngredientsTable();
+    }
+
+    function deleteIngredient(idx) {
+      if (confirm(`ต้องการลบ ${ingredients[idx].name} หรือไม่?`)) {
+        ingredients.splice(idx, 1);
+        renderAdminIngredientsTable();
+      }
+    }
+
+    function saveAdminChanges() {
+      ingredients.forEach((item, idx) => {
+        item.cat = document.getElementById(`admCat_${idx}`).value;
+        item.name = document.getElementById(`admName_${idx}`).value;
+        item.serving = document.getElementById(`admServ_${idx}`).value;
+        item.price = parseFloat(document.getElementById(`admPrice_${idx}`).value) || 0;
+        item.kcal = parseFloat(document.getElementById(`admKcal_${idx}`).value) || 0;
+        item.p = parseFloat(document.getElementById(`admP_${idx}`).value) || 0;
+        item.c = parseFloat(document.getElementById(`admC_${idx}`).value) || 0;
+        item.f = parseFloat(document.getElementById(`admF_${idx}`).value) || 0;
+        item.fib = parseFloat(document.getElementById(`admFib_${idx}`).value) || 0;
+      });
+      localStorage.setItem('chub_ingredients', JSON.stringify(ingredients));
+
+      siteConfig.bgUrl = document.getElementById('cfgBgUrl').value;
+      siteConfig.basePrice = parseFloat(document.getElementById('cfgBasePrice').value) || 59;
+      siteConfig.logoText = document.getElementById('cfgLogoText').value;
+      siteConfig.siteTitle = document.getElementById('cfgSiteTitle').value;
+      siteConfig.siteSubtitle = document.getElementById('cfgSiteSubtitle').value;
+      siteConfig.screenshotAlert = document.getElementById('cfgScreenshotAlert').value;
+      localStorage.setItem('chub_config', JSON.stringify(siteConfig));
+
+      applyConfigToUI();
+      renderIngredients();
+      updateTrackerDashboard();
+      closeAdminPanel();
+      alert("บันทึกการเปลี่ยนแปลงทั้งหมดเรียบร้อยแล้ว!");
+    }
+
+    function restoreDefaults() {
+      if (confirm("ต้องการคืนค่าเริ่มต้นทั้งหมดของระบบหรือไม่? ข้อมูลที่คุณแก้ไขไว้จะถูกรีเซ็ต")) {
+        localStorage.removeItem('chub_config');
+        localStorage.removeItem('chub_ingredients');
+        siteConfig = DEFAULT_CONFIG;
+        ingredients = DEFAULT_INGREDIENTS;
+        applyConfigToUI();
+        renderAdminIngredientsTable();
+        loadContentConfig();
+        renderIngredients();
+        updateTrackerDashboard();
+        alert("รีเซ็ตเป็นค่าเริ่มต้นเรียบร้อยแล้ว!");
+      }
+    }
+  </script>
+</body>
+</html>
