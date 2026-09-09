@@ -114,7 +114,7 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     }
 
-    /* Category Pill Selector (Sticky & Sleek) */
+    /* Category Pill Selector */
     .category-scroll {
       display: flex;
       gap: 6px;
@@ -127,15 +127,16 @@
     .category-scroll::-webkit-scrollbar { display: none; }
     .cat-btn {
       white-space: nowrap;
-      padding: 6px 14px;
+      padding: 6px 16px;
       border-radius: 100px;
       border: 1px solid rgba(255,255,255,0.8);
       background: rgba(255, 255, 255, 0.7);
-      font-size: 0.78rem;
+      font-size: 0.82rem;
       font-weight: 600;
       cursor: pointer;
       color: var(--text-muted);
       backdrop-filter: blur(10px);
+      text-transform: capitalize;
     }
     .cat-btn.active {
       background: var(--text-main);
@@ -416,7 +417,7 @@
       border-color: var(--primary-orange);
     }
 
-    /* RECEIPT PAGE (Screenshot-Optimized) */
+    /* RECEIPT PAGE */
     .receipt-container {
       background: white;
       border-radius: 24px;
@@ -651,19 +652,16 @@
           <div style="font-size:0.75rem; color:var(--text-muted);" id="receiptTimestamp">-</div>
         </div>
 
-        <!-- ข้อความแจ้งเตือนแคปหน้าจอสั่งอาหาร -->
         <div class="receipt-alert">
           <i data-lucide="camera" style="width:15px; vertical-align:middle; margin-right:4px;"></i>
           <span id="txtScreenshotAlert">แคปหน้าจอเพื่อนำไปใช้สั่งอาหารภายในร้าน</span>
         </div>
 
-        <!-- Target Comparison -->
         <div style="background:#F9FAFB; border-radius:12px; padding:10px; margin-bottom:12px;">
           <div style="font-size:0.75rem; font-weight:700; margin-bottom:6px; color:var(--text-muted);">โภชนาการที่ได้รับเทียบเป้าหมาย</div>
           <table style="width:100%; font-size:0.78rem; border-collapse:collapse;" id="receiptNutritionTable"></table>
         </div>
 
-        <!-- Items Table -->
         <table class="receipt-table">
           <thead>
             <tr style="color:var(--text-muted); text-align:left; font-size:0.75rem;">
@@ -681,7 +679,6 @@
           </tfoot>
         </table>
 
-        <!-- Single Clean Action Button -->
         <div style="margin-top:14px;">
           <button class="btn-reset-clean" style="width:100%; padding:11px; font-size:0.85rem; justify-content:center; display:flex; align-items:center; gap:6px;" onclick="showStep(2)">
             <i data-lucide="edit-3" style="width:15px;"></i> กลับไปแก้ไขรายการอาหาร
@@ -691,7 +688,7 @@
     </section>
   </div>
 
-  <!-- FLOATING BOTTOM DASHBOARD (CLEAN & SLEEK) -->
+  <!-- FLOATING BOTTOM DASHBOARD -->
   <div class="floating-tracker" id="floatingTracker">
     <div class="tracker-handle" onclick="toggleTrackerDetails()">
       <div class="tracker-handle-title">
@@ -701,7 +698,6 @@
       <div style="font-size:0.7rem; color:var(--text-muted);" id="trackerToggleTxt">แตะเพื่อย่อ ▾</div>
     </div>
 
-    <!-- 5 Macro Pills -->
     <div class="macro-chips-grid" id="macroPillsArea">
       <div class="macro-chip">
         <div class="macro-chip-name">Kcal</div>
@@ -730,16 +726,16 @@
       </div>
     </div>
 
-    <!-- Bottom Row: Price & Actions -->
+    <!-- ปรับชื่อปุ่มเป็น Reset และ Your Bowl เรียบร้อยแล้ว -->
     <div class="tracker-bottom-row">
       <div class="price-block">
         <div class="price-block-total" id="trkTotalPrice">฿59</div>
         <div class="price-block-sub" id="trkBaseHint">รวมค่าเริ่มต้น ฿59</div>
       </div>
       <div class="action-group">
-        <button class="btn-reset-clean" onclick="resetSelections()">รีเซ็ต</button>
+        <button class="btn-reset-clean" onclick="resetSelections()">Reset</button>
         <button class="btn-checkout-clean" onclick="showStep(3)">
-          สรุปออเดอร์ <i data-lucide="check" style="width:14px;"></i>
+          Your Bowl <i data-lucide="check" style="width:14px;"></i>
         </button>
       </div>
     </div>
@@ -845,22 +841,17 @@
       { id: 'd3', cat: 'dressing', name: 'Olive oil & Balsamic', serving: '30ml', price: 9, kcal: 148, p: 0.1, c: 4.2, f: 14.8, fib: 0.1 },
       { id: 'd4', cat: 'dressing', name: 'Caesar', serving: '50ml', price: 9, kcal: 195, p: 1.5, c: 2.2, f: 20.8, fib: 0.1 },
       { id: 'd5', cat: 'dressing', name: 'Gochujang', serving: '50ml', price: 0, kcal: 164, p: 1.8, c: 15.6, f: 10.8, fib: 0.8 },
-      { id: 'd6', cat: 'dressing', name: 'Miso Sesame', serving: '50ml', price: 0, kcal: 242, p: 2.6, c: 8.6, f: 22.4, fib: 0.9 },
-
-      // DRINKS
-      { id: 'dr1', cat: 'drinks', name: 'Mineral Water', serving: '1 bot', price: 15, kcal: 0, p: 0, c: 0, f: 0, fib: 0 },
-      { id: 'dr2', cat: 'drinks', name: 'Coke Zero', serving: '1 can', price: 20, kcal: 0, p: 0, c: 0, f: 0, fib: 0 },
-      { id: 'dr3', cat: 'drinks', name: 'Cold Brew Coffee', serving: '1 cup', price: 50, kcal: 5, p: 0.3, c: 0, f: 0, fib: 0 },
-      { id: 'dr4', cat: 'drinks', name: 'Clear Matcha', serving: '1 cup', price: 50, kcal: 12, p: 0.8, c: 1.5, f: 0.1, fib: 0.5 },
-      { id: 'dr5', cat: 'drinks', name: 'Matcha Latte Oatmilk', serving: '1 cup', price: 60, kcal: 135, p: 2.5, c: 22.0, f: 4.2, fib: 1.8 }
+      { id: 'd6', cat: 'dressing', name: 'Miso Sesame', serving: '50ml', price: 0, kcal: 242, p: 2.6, c: 8.6, f: 22.4, fib: 0.9 }
     ];
 
-    const CATEGORIES = ['all', 'proteins', 'greens', 'crunch', 'veggies', 'toppings', 'dressing', 'drinks'];
+    const CATEGORIES = ['proteins', 'greens', 'crunch', 'veggies', 'toppings', 'dressing'];
 
     let siteConfig = JSON.parse(localStorage.getItem('chub_config')) || DEFAULT_CONFIG;
     let ingredients = JSON.parse(localStorage.getItem('chub_ingredients')) || DEFAULT_INGREDIENTS;
+    ingredients = ingredients.filter(i => i.cat !== 'drinks');
+    
     let selectedCart = {};
-    let activeCategory = 'all';
+    let activeCategory = 'proteins';
     let isTrackerCollapsed = false;
 
     let targetNutrition = { mode: 'auto', kcal: 600, protein: 45, carb: 60, fat: 20, fiber: 8 };
@@ -984,7 +975,7 @@
       const wrapper = document.getElementById('categoryScroll');
       wrapper.innerHTML = CATEGORIES.map(cat => `
         <button class="cat-btn ${cat === activeCategory ? 'active' : ''}" onclick="setCategory('${cat}')">
-          ${cat === 'all' ? 'ทั้งหมด' : cat}
+          ${cat}
         </button>
       `).join('');
     }
@@ -997,9 +988,7 @@
 
     function renderIngredients() {
       const container = document.getElementById('ingredientsContainer');
-      const filtered = activeCategory === 'all' 
-        ? ingredients 
-        : ingredients.filter(i => i.cat === activeCategory);
+      const filtered = ingredients.filter(i => i.cat === activeCategory);
 
       container.innerHTML = filtered.map(item => {
         const qty = selectedCart[item.id] || 0;
