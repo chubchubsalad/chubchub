@@ -10,8 +10,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Screenshot Capture -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
     :root {
@@ -85,7 +83,7 @@
       line-height: 1.2;
     }
 
-    /* Step Navigation Tabs (Compact) */
+    /* Step Navigation Tabs */
     .step-tabs {
       display: flex;
       gap: 4px;
@@ -145,7 +143,7 @@
       border-color: var(--text-main);
     }
 
-    /* COMPACT INGREDIENT LIST ITEM (MOBILE-OPTIMIZED) */
+    /* Compact Ingredient List Items */
     .ingredients-grid {
       display: flex;
       flex-direction: column;
@@ -208,7 +206,7 @@
       border-radius: 6px;
     }
 
-    /* Counter Control (Compact & Precise) */
+    /* Counter Controls */
     .counter-ctrl {
       display: flex;
       align-items: center;
@@ -244,7 +242,7 @@
       text-align: center;
     }
 
-    /* CLEAN MOBILE FLOATING DASHBOARD */
+    /* Floating Real-Time Nutrition Dashboard */
     .floating-tracker {
       position: fixed;
       bottom: calc(10px + env(safe-area-inset-bottom, 0px));
@@ -278,7 +276,6 @@
       gap: 4px;
     }
 
-    /* Modern Macro Pills Grid */
     .macro-chips-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
@@ -322,7 +319,6 @@
       background: #EF4444;
     }
 
-    /* Bottom Action Row */
     .tracker-bottom-row {
       display: flex;
       align-items: center;
@@ -420,11 +416,11 @@
       border-color: var(--primary-orange);
     }
 
-    /* RECEIPT PAGE */
+    /* RECEIPT PAGE (Screenshot-Optimized) */
     .receipt-container {
       background: white;
       border-radius: 24px;
-      padding: 20px 16px;
+      padding: 24px 18px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
       max-width: 480px;
       margin: 0 auto;
@@ -440,21 +436,22 @@
       background: var(--primary-orange);
       color: white;
       font-weight: 900;
-      font-size: 1.3rem;
-      padding: 6px 18px;
+      font-size: 1.35rem;
+      padding: 6px 20px;
       border-radius: 14px;
       margin-bottom: 6px;
     }
     .receipt-alert {
       background: #FFF7ED;
-      border: 1px solid #FFEDD5;
+      border: 1.5px solid #FDBA74;
       color: #C2410C;
-      font-size: 0.8rem;
+      font-size: 0.88rem;
       font-weight: 700;
-      padding: 8px;
-      border-radius: 10px;
+      padding: 10px;
+      border-radius: 12px;
       text-align: center;
       margin-bottom: 14px;
+      line-height: 1.3;
     }
     .receipt-table {
       width: 100%;
@@ -467,12 +464,12 @@
       border-bottom: 1px solid #F3F4F6;
     }
     .receipt-total-row td {
-      font-size: 1.15rem;
+      font-size: 1.2rem;
       font-weight: 800;
       color: var(--primary-orange);
       border-top: 2px solid #1D1D1F;
       border-bottom: none;
-      padding-top: 10px;
+      padding-top: 12px;
     }
 
     /* Modals */
@@ -641,10 +638,7 @@
 
     <!-- STEP 2: BUILD BOWL -->
     <section id="step2View" class="hidden">
-      <!-- Category Selector -->
       <div class="category-scroll" id="categoryScroll"></div>
-
-      <!-- Ingredient Compact Rows -->
       <div class="ingredients-grid" id="ingredientsContainer"></div>
     </section>
 
@@ -657,9 +651,10 @@
           <div style="font-size:0.75rem; color:var(--text-muted);" id="receiptTimestamp">-</div>
         </div>
 
+        <!-- ข้อความแจ้งเตือนแคปหน้าจอสั่งอาหาร -->
         <div class="receipt-alert">
-          <i data-lucide="camera" style="width:14px; vertical-align:middle; margin-right:4px;"></i>
-          <span id="txtScreenshotAlert">บันทึกหน้าจอนี้เพื่อใช้ในการสั่งออเดอร์</span>
+          <i data-lucide="camera" style="width:15px; vertical-align:middle; margin-right:4px;"></i>
+          <span id="txtScreenshotAlert">แคปหน้าจอเพื่อนำไปใช้สั่งอาหารภายในร้าน</span>
         </div>
 
         <!-- Target Comparison -->
@@ -686,9 +681,11 @@
           </tfoot>
         </table>
 
-        <div style="display:flex; gap:8px; margin-top:14px;">
-          <button class="btn-reset-clean" style="flex:1; padding:10px;" onclick="showStep(2)">กลับไปแก้ไข</button>
-          <button class="btn-checkout-clean" style="flex:1; justify-content:center; padding:10px;" onclick="captureReceipt()">บันทึกรูปภาพ</button>
+        <!-- Single Clean Action Button -->
+        <div style="margin-top:14px;">
+          <button class="btn-reset-clean" style="width:100%; padding:11px; font-size:0.85rem; justify-content:center; display:flex; align-items:center; gap:6px;" onclick="showStep(2)">
+            <i data-lucide="edit-3" style="width:15px;"></i> กลับไปแก้ไขรายการอาหาร
+          </button>
         </div>
       </div>
     </section>
@@ -696,7 +693,6 @@
 
   <!-- FLOATING BOTTOM DASHBOARD (CLEAN & SLEEK) -->
   <div class="floating-tracker" id="floatingTracker">
-    <!-- Collapsible Handle -->
     <div class="tracker-handle" onclick="toggleTrackerDetails()">
       <div class="tracker-handle-title">
         <i data-lucide="activity" style="width:14px; color:var(--primary-orange);"></i>
@@ -705,33 +701,28 @@
       <div style="font-size:0.7rem; color:var(--text-muted);" id="trackerToggleTxt">แตะเพื่อย่อ ▾</div>
     </div>
 
-    <!-- 5 Macro Pills (Grid) -->
+    <!-- 5 Macro Pills -->
     <div class="macro-chips-grid" id="macroPillsArea">
-      <!-- Kcal -->
       <div class="macro-chip">
         <div class="macro-chip-name">Kcal</div>
         <div class="macro-chip-val" id="trkKcalVal">0</div>
         <div class="macro-chip-bar"><div class="macro-chip-fill" id="barKcal" style="width:0%"></div></div>
       </div>
-      <!-- Protein -->
       <div class="macro-chip">
         <div class="macro-chip-name">Protein</div>
         <div class="macro-chip-val" id="trkProteinVal">0g</div>
         <div class="macro-chip-bar"><div class="macro-chip-fill" id="barProtein" style="width:0%"></div></div>
       </div>
-      <!-- Carb -->
       <div class="macro-chip">
         <div class="macro-chip-name">Carb</div>
         <div class="macro-chip-val" id="trkCarbVal">0g</div>
         <div class="macro-chip-bar"><div class="macro-chip-fill" id="barCarb" style="width:0%"></div></div>
       </div>
-      <!-- Fat -->
       <div class="macro-chip">
         <div class="macro-chip-name">Fat</div>
         <div class="macro-chip-val" id="trkFatVal">0g</div>
         <div class="macro-chip-bar"><div class="macro-chip-fill" id="barFat" style="width:0%"></div></div>
       </div>
-      <!-- Fiber -->
       <div class="macro-chip">
         <div class="macro-chip-name">Fiber</div>
         <div class="macro-chip-val" id="trkFiberVal">0g</div>
@@ -799,7 +790,7 @@
       basePrice: 59,
       logoText: "CHUB CHUB",
       siteTitle: "Custom Bowl & Nutrition",
-      screenshotAlert: "บันทึกหน้าจอนี้เพื่อใช้ในการสั่งออเดอร์",
+      screenshotAlert: "แคปหน้าจอเพื่อนำไปใช้สั่งอาหารภายในร้าน",
       bgUrl: "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?q=80&w=2070&auto=format&fit=crop"
     };
 
@@ -1004,7 +995,6 @@
       renderIngredients();
     }
 
-    /* RENDER COMPACT LIST ITEMS */
     function renderIngredients() {
       const container = document.getElementById('ingredientsContainer');
       const filtered = activeCategory === 'all' 
@@ -1082,18 +1072,15 @@
       return totals;
     }
 
-    /* UPDATE CLEAN MACRO PILLS */
     function updateTrackerDashboard() {
       const totals = calculateCartTotals();
 
-      // Text updates
       document.getElementById('trkKcalVal').innerText = `${totals.kcal}/${targetNutrition.kcal}`;
       document.getElementById('trkProteinVal').innerText = `${totals.p}/${targetNutrition.protein}g`;
       document.getElementById('trkCarbVal').innerText = `${totals.c}/${targetNutrition.carb}g`;
       document.getElementById('trkFatVal').innerText = `${totals.f}/${targetNutrition.fat}g`;
       document.getElementById('trkFiberVal').innerText = `${totals.fib}/${targetNutrition.fiber}g`;
 
-      // Progress bar fill
       setMacroBar('barKcal', totals.kcal, targetNutrition.kcal);
       setMacroBar('barProtein', totals.p, targetNutrition.protein);
       setMacroBar('barCarb', totals.c, targetNutrition.carb);
@@ -1112,7 +1099,6 @@
       else bar.classList.remove('over');
     }
 
-    /* COLLAPSE / EXPAND TRACKER ON MOBILE */
     function toggleTrackerDetails() {
       const pills = document.getElementById('macroPillsArea');
       const toggleTxt = document.getElementById('trackerToggleTxt');
@@ -1127,7 +1113,6 @@
       }
     }
 
-    /* RECEIPT BUILDER */
     function buildReceipt() {
       const totals = calculateCartTotals();
       const now = new Date();
@@ -1163,16 +1148,6 @@
       }
       document.getElementById('receiptItemsTable').innerHTML = rows;
       document.getElementById('receiptFinalTotal').innerText = `฿${totals.grandTotal}`;
-    }
-
-    function captureReceipt() {
-      const receiptElem = document.getElementById('printableReceipt');
-      html2canvas(receiptElem, { scale: 2 }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = `CHUB-CHUB-${Date.now()}.png`;
-        link.href = canvas.toDataURL();
-        link.click();
-      });
     }
 
     /* ADMIN CMS */
