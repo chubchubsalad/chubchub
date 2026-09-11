@@ -196,14 +196,14 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 0.74rem;
+      font-size: 0.76rem;
       color: var(--text-muted);
     }
     .ing-kcal-tag {
       font-weight: 700;
       color: #374151;
       background: rgba(0,0,0,0.04);
-      padding: 1px 6px;
+      padding: 1px 7px;
       border-radius: 6px;
     }
 
@@ -726,7 +726,6 @@
       </div>
     </div>
 
-    <!-- ปรับชื่อปุ่มเป็น Reset และ Your Bowl เรียบร้อยแล้ว -->
     <div class="tracker-bottom-row">
       <div class="price-block">
         <div class="price-block-total" id="trkTotalPrice">฿59</div>
@@ -986,6 +985,7 @@
       renderIngredients();
     }
 
+    /* RENDER INGREDIENTS (นำ P: และ C: ออกแล้ว เหลือเฉพาะ Serving & Kcal) */
     function renderIngredients() {
       const container = document.getElementById('ingredientsContainer');
       const filtered = ingredients.filter(i => i.cat === activeCategory);
@@ -1003,7 +1003,6 @@
               <div class="ing-subline">
                 <span>${item.serving}</span>
                 <span class="ing-kcal-tag">${item.kcal} kcal</span>
-                <span>P:${item.p}g • C:${item.c}g</span>
               </div>
             </div>
             <div class="counter-ctrl">
