@@ -1297,7 +1297,7 @@
           document.getElementById('catModalTitle').innerText = "แก้ไขหมวดหมู่";
           document.getElementById('editCatId').value = cat.id;
           document.getElementById('catIdInput').value = cat.id;
-          document.getElementById('catIdInput').disabled = true; // ไม่อนุญาตให้เปลี่ยน ID ป้องกันลิงก์ข้อมูลพัง
+          document.getElementById('catIdInput').disabled = true;
           document.getElementById('catNameInput').value = cat.name;
         }
       } else {
@@ -1373,7 +1373,6 @@
     /* INGREDIENT MANAGEMENT & REORDERING FUNCTIONS */
     function renderAdminIngredientsList() {
       const container = document.getElementById('adminIngredientsList');
-      // จัดกลุ่มตามหมวดหมู่และเรียงตาม order
       let html = '';
       categories.forEach(cat => {
         const catItems = ingredients.filter(i => i.cat === cat.id).sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -1403,18 +1402,26 @@
     function moveIngredient(id, direction) {
       const item = ingredients.find(i => i.id === id);
       if (!item) return;
-      const catItems = ingredients.filter(i => i.cat === item.cat).sort((a, b) => (a.order || 0) - (b.order || 0));
+
+      // ดึงรายการทั้งหมดในหมวดหมู่เดียวกัน เรียงตาม order ปัจจุบัน
+      let catItems = ingredients.filter(i => i.cat === item.cat).sort((a, b) => (a.order || 0) - (b.order || 0));
       const currentIndex = catItems.findIndex(i => i.id === id);
       const targetIndex = currentIndex + direction;
+
       if (targetIndex < 0 || targetIndex >= catItems.length) return;
 
-      // สลับค่า order กับตัวเป้าหมาย
-      const tempOrder = catItems[currentIndex].order || 0;
-      catItems[currentIndex].order = catItems[targetIndex].order || 0;
-      catItems[targetIndex].order = tempOrder;
+      // สลับตำแหน่งในอาเรย์ย่อยของหมวดหมู่นั้น
+      const temp = catItems[currentIndex];
+      catItems[currentIndex] = catItems[targetIndex];
+      catItems[targetIndex] = temp;
 
-      // หาก order เท่ากัน ให้จัดลำดับใหม่ทั้งหมดในหมวดหมู่นั้น
-      catItems.forEach((it, idx) => { it.order = idx + 1; });
+      // กำหนดค่า order ใหม่ให้กับไอเทมในหมวดหมู่นั้น
+      catItems.forEach((it, idx) => {
+        it.order = idx + 1;
+      });
+
+      // อัปเดตกลับเข้าไปในอาเรย์หลัก ingredients โดยตัดของเก่าออกแล้วแทนที่ด้วยหมวดหมู่นี้
+      ingredients = ingredients.filter(i => i.cat !== item.cat).concat(catItems);
 
       localStorage.setItem('chub_ingredients', JSON.stringify(ingredients));
       renderAdminIngredientsList();
@@ -1422,7 +1429,6 @@
     }
 
     function openItemModal(id) {
-      // โหลดตัวเลือกหมวดหมู่ใส่ใน Select ของฟอร์มวัตถุดิบ
       const catSelect = document.getElementById('itemCat');
       catSelect.innerHTML = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
 
