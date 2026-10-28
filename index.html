@@ -782,13 +782,43 @@
         <button class="btn-checkout-clean" style="width:100%; justify-content:center; padding:8px;" onclick="saveAdminChanges()">บันทึกตั้งค่าทั่วไป</button>
       </div>
 
+      <!-- CATEGORY MANAGEMENT -->
+      <div style="margin-bottom:16px; border-bottom:1px solid #E5E7EB; padding-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <h4 style="font-size:0.9rem; color:var(--primary-orange);">จัดการหมวดหมู่</h4>
+          <button class="btn-checkout-clean" style="padding:4px 10px; font-size:0.75rem;" onclick="openCategoryModal(null)">+ เพิ่มหมวดหมู่</button>
+        </div>
+        <div style="max-height: 180px; overflow-y: auto; border: 1px solid #E5E7EB; border-radius: 12px; padding: 6px;" id="adminCategoriesList"></div>
+      </div>
+
+      <!-- INGREDIENT MANAGEMENT -->
       <div>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <h4 style="font-size:0.9rem; color:var(--primary-orange);">จัดการวัตถุดิบทั้งหมด</h4>
           <button class="btn-checkout-clean" style="padding:4px 10px; font-size:0.75rem;" onclick="openItemModal(null)">+ เพิ่มวัตถุดิบใหม่</button>
         </div>
-        <div style="max-height: 250px; overflow-y: auto; border: 1px solid #E5E7EB; border-radius: 12px; padding: 6px;" id="adminIngredientsList"></div>
+        <div style="max-height: 220px; overflow-y: auto; border: 1px solid #E5E7EB; border-radius: 12px; padding: 6px;" id="adminIngredientsList"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- ADD / EDIT CATEGORY MODAL -->
+  <div class="modal-backdrop" id="categoryModal">
+    <div class="admin-card" style="max-width: 350px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 id="catModalTitle" style="font-size:1rem;">เพิ่ม/แก้ไขหมวดหมู่</h3>
+        <button onclick="closeCategoryModal()" style="border:none; background:none; cursor:pointer;"><i data-lucide="x" style="width:18px;"></i></button>
+      </div>
+      <input type="hidden" id="editCatId">
+      <div class="form-group" style="margin-bottom:10px;">
+        <label>รหัสหมวดหมู่ (ID เช่น proteins, drinks)</label>
+        <input type="text" id="catIdInput" placeholder="ภาษาอังกฤษตัวพิมพ์เล็กติดกัน">
+      </div>
+      <div class="form-group" style="margin-bottom:14px;">
+        <label>ชื่อแสดงผล (Name เช่น โปรตีน)</label>
+        <input type="text" id="catNameInput" placeholder="เช่น โปรตีน">
+      </div>
+      <button class="btn-checkout-clean" style="width:100%; justify-content:center; padding:10px;" onclick="saveCategoryData()">บันทึกหมวดหมู่</button>
     </div>
   </div>
 
@@ -803,14 +833,7 @@
       <div class="form-row-2">
         <div class="form-group">
           <label>หมวดหมู่ (Category)</label>
-          <select id="itemCat">
-            <option value="proteins">proteins</option>
-            <option value="greens">greens</option>
-            <option value="crunch">crunch</option>
-            <option value="veggies">veggies</option>
-            <option value="toppings">toppings</option>
-            <option value="dressing">dressing</option>
-          </select>
+          <select id="itemCat"></select>
         </div>
         <div class="form-group">
           <label>ชื่อวัตถุดิบ</label>
@@ -864,56 +887,64 @@
       bgUrl: "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?q=80&w=2070&auto=format&fit=crop"
     };
 
-    const DEFAULT_INGREDIENTS = [
-      { id: 'p1', cat: 'proteins', name: 'Blackened Chicken', serving: '80g', price: 59, kcal: 156, p: 17.2, c: 1.6, f: 9.2, fib: 0.5 },
-      { id: 'p2', cat: 'proteins', name: 'Sous Vide Chicken Breast', serving: '80g', price: 49, kcal: 102, p: 24.8, c: 0.4, f: 0.8, fib: 0.1 },
-      { id: 'p3', cat: 'proteins', name: 'Boiled Shrimp', serving: '3 pcs', price: 69, kcal: 65, p: 14.0, c: 0.2, f: 0.6, fib: 0 },
-      { id: 'p4', cat: 'proteins', name: 'Minced Beef Nachos', serving: '50g', price: 49, kcal: 126, p: 11.2, c: 1.4, f: 8.6, fib: 0.4 },
-      { id: 'p5', cat: 'proteins', name: 'Chickpeas', serving: '50g', price: 15, kcal: 82, p: 4.5, c: 13.7, f: 1.3, fib: 3.8 },
-      { id: 'p6', cat: 'proteins', name: 'Boiled Egg', serving: '1 pc', price: 9, kcal: 74, p: 6.3, c: 0.4, f: 5.0, fib: 0 },
-      { id: 'g1', cat: 'greens', name: 'Butterhead Lettuce', serving: '50g', price: 0, kcal: 8, p: 0.6, c: 1.1, f: 0.1, fib: 0.6 },
-      { id: 'g2', cat: 'greens', name: 'Baby Cos Lettuce', serving: '50g', price: 0, kcal: 9, p: 0.8, c: 1.4, f: 0.2, fib: 1.0 },
-      { id: 'g3', cat: 'greens', name: 'Green Oak Lettuce', serving: '30g', price: 0, kcal: 5, p: 0.4, c: 0.8, f: 0.1, fib: 0.5 },
-      { id: 'g4', cat: 'greens', name: 'Kale', serving: '30g', price: 15, kcal: 15, p: 1.3, c: 2.7, f: 0.3, fib: 1.2 },
-      { id: 'g5', cat: 'greens', name: 'Arugula', serving: '20g', price: 15, kcal: 5, p: 0.5, c: 0.7, f: 0.1, fib: 0.3 },
-      { id: 'c1', cat: 'crunch', name: 'Crispy Chicken Skin', serving: '20g', price: 19, kcal: 115, p: 8.0, c: 0.2, f: 9.4, fib: 0 },
-      { id: 'c2', cat: 'crunch', name: 'Crispy Bacon', serving: '10g', price: 19, kcal: 54, p: 3.7, c: 0.1, f: 4.2, fib: 0 },
-      { id: 'c3', cat: 'crunch', name: 'Corn Chips', serving: '20g', price: 19, kcal: 98, p: 1.4, c: 13.2, f: 4.8, fib: 1.1 },
-      { id: 'c4', cat: 'crunch', name: 'Crispy Whole Wheat', serving: '20g', price: 15, kcal: 78, p: 2.6, c: 14.5, f: 1.2, fib: 2.2 },
-      { id: 'c5', cat: 'crunch', name: 'Crispy Shallots', serving: '15g', price: 9, kcal: 72, p: 0.9, c: 6.8, f: 4.8, fib: 0.6 },
-      { id: 'v1', cat: 'veggies', name: 'Quinoa', serving: '50g', price: 25, kcal: 60, p: 2.2, c: 10.7, f: 1.0, fib: 1.4 },
-      { id: 'v2', cat: 'veggies', name: 'Japanese Pumpkin', serving: '100g', price: 19, kcal: 45, p: 1.2, c: 10.5, f: 0.1, fib: 1.8 },
-      { id: 'v3', cat: 'veggies', name: 'Sweet Corn', serving: '50g', price: 15, kcal: 43, p: 1.6, c: 9.5, f: 0.6, fib: 1.2 },
-      { id: 'v4', cat: 'veggies', name: 'Edamame', serving: '30g', price: 15, kcal: 36, p: 3.6, c: 2.7, f: 1.5, fib: 1.5 },
-      { id: 'v5', cat: 'veggies', name: 'Cherry Tomatoes', serving: '50g', price: 15, kcal: 9, p: 0.5, c: 1.9, f: 0.1, fib: 0.6 },
-      { id: 'v6', cat: 'veggies', name: 'White Beans', serving: '50g', price: 9, kcal: 69, p: 4.8, c: 12.5, f: 0.3, fib: 3.1 },
-      { id: 'v7', cat: 'veggies', name: 'Shredded Carrots', serving: '30g', price: 0, kcal: 12, p: 0.3, c: 2.9, f: 0.1, fib: 0.8 },
-      { id: 'v8', cat: 'veggies', name: 'Red Onions', serving: '30g', price: 0, kcal: 12, p: 0.3, c: 2.8, f: 0, fib: 0.5 },
-      { id: 'v9', cat: 'veggies', name: 'Japanese Cucumber', serving: '30g', price: 0, kcal: 5, p: 0.2, c: 1.1, f: 0, fib: 0.3 },
-      { id: 'v10', cat: 'veggies', name: 'Radish', serving: '30g', price: 0, kcal: 5, p: 0.2, c: 1.0, f: 0, fib: 0.5 },
-      { id: 't1', cat: 'toppings', name: 'Feta Cheese', serving: '10g', price: 29, kcal: 26, p: 1.4, c: 0.4, f: 2.1, fib: 0 },
-      { id: 't2', cat: 'toppings', name: 'Parmesan Cheese', serving: '10g', price: 29, kcal: 43, p: 3.8, c: 0.4, f: 2.9, fib: 0 },
-      { id: 't3', cat: 'toppings', name: 'Olive Oil', serving: '20ml', price: 29, kcal: 168, p: 0, c: 0, f: 18.4, fib: 0 },
-      { id: 't4', cat: 'toppings', name: 'Black Olives', serving: '10g', price: 19, kcal: 12, p: 0.1, c: 0.6, f: 1.1, fib: 0.3 },
-      { id: 't5', cat: 'toppings', name: 'Sliced Almonds', serving: '15g', price: 15, kcal: 87, p: 3.2, c: 3.3, f: 7.4, fib: 1.8 },
-      { id: 't6', cat: 'toppings', name: 'Cashew Nuts', serving: '15g', price: 15, kcal: 83, p: 2.7, c: 4.5, f: 6.6, fib: 0.5 },
-      { id: 't7', cat: 'toppings', name: 'Walnuts', serving: '15g', price: 15, kcal: 98, p: 2.3, c: 2.1, f: 9.8, fib: 1.0 },
-      { id: 't8', cat: 'toppings', name: 'Pumpkin Seeds', serving: '15g', price: 15, kcal: 85, p: 4.5, c: 2.0, f: 7.4, fib: 1.0 },
-      { id: 'd1', cat: 'dressing', name: 'Chipotle', serving: '50ml', price: 19, kcal: 230, p: 0.5, c: 6.4, f: 23.0, fib: 0.4 },
-      { id: 'd2', cat: 'dressing', name: 'Honey Mustard', serving: '50ml', price: 9, kcal: 158, p: 1.2, c: 15.2, f: 10.5, fib: 0.5 },
-      { id: 'd3', cat: 'dressing', name: 'Olive oil & Balsamic', serving: '30ml', price: 9, kcal: 148, p: 0.1, c: 4.2, f: 14.8, fib: 0.1 },
-      { id: 'd4', cat: 'dressing', name: 'Caesar', serving: '50ml', price: 9, kcal: 195, p: 1.5, c: 2.2, f: 20.8, fib: 0.1 },
-      { id: 'd5', cat: 'dressing', name: 'Gochujang', serving: '50ml', price: 0, kcal: 164, p: 1.8, c: 15.6, f: 10.8, fib: 0.8 },
-      { id: 'd6', cat: 'dressing', name: 'Miso Sesame', serving: '50ml', price: 0, kcal: 242, p: 2.6, c: 8.6, f: 22.4, fib: 0.9 }
+    const DEFAULT_CATEGORIES = [
+      { id: 'proteins', name: 'Proteins' },
+      { id: 'greens', name: 'Greens' },
+      { id: 'crunch', name: 'Crunch' },
+      { id: 'veggies', name: 'Veggies' },
+      { id: 'toppings', name: 'Toppings' },
+      { id: 'dressing', name: 'Dressing' }
     ];
 
-    const CATEGORIES = ['proteins', 'greens', 'crunch', 'veggies', 'toppings', 'dressing'];
+    const DEFAULT_INGREDIENTS = [
+      { id: 'p1', cat: 'proteins', name: 'Blackened Chicken', serving: '80g', price: 59, kcal: 156, p: 17.2, c: 1.6, f: 9.2, fib: 0.5, order: 1 },
+      { id: 'p2', cat: 'proteins', name: 'Sous Vide Chicken Breast', serving: '80g', price: 49, kcal: 102, p: 24.8, c: 0.4, f: 0.8, fib: 0.1, order: 2 },
+      { id: 'p3', cat: 'proteins', name: 'Boiled Shrimp', serving: '3 pcs', price: 69, kcal: 65, p: 14.0, c: 0.2, f: 0.6, fib: 0, order: 3 },
+      { id: 'p4', cat: 'proteins', name: 'Minced Beef Nachos', serving: '50g', price: 49, kcal: 126, p: 11.2, c: 1.4, f: 8.6, fib: 0.4, order: 4 },
+      { id: 'p5', cat: 'proteins', name: 'Chickpeas', serving: '50g', price: 15, kcal: 82, p: 4.5, c: 13.7, f: 1.3, fib: 3.8, order: 5 },
+      { id: 'p6', cat: 'proteins', name: 'Boiled Egg', serving: '1 pc', price: 9, kcal: 74, p: 6.3, c: 0.4, f: 5.0, fib: 0, order: 6 },
+      { id: 'g1', cat: 'greens', name: 'Butterhead Lettuce', serving: '50g', price: 0, kcal: 8, p: 0.6, c: 1.1, f: 0.1, fib: 0.6, order: 1 },
+      { id: 'g2', cat: 'greens', name: 'Baby Cos Lettuce', serving: '50g', price: 0, kcal: 9, p: 0.8, c: 1.4, f: 0.2, fib: 1.0, order: 2 },
+      { id: 'g3', cat: 'greens', name: 'Green Oak Lettuce', serving: '30g', price: 0, kcal: 5, p: 0.4, c: 0.8, f: 0.1, fib: 0.5, order: 3 },
+      { id: 'g4', cat: 'greens', name: 'Kale', serving: '30g', price: 15, kcal: 15, p: 1.3, c: 2.7, f: 0.3, fib: 1.2, order: 4 },
+      { id: 'g5', cat: 'greens', name: 'Arugula', serving: '20g', price: 15, kcal: 5, p: 0.5, c: 0.7, f: 0.1, fib: 0.3, order: 5 },
+      { id: 'c1', cat: 'crunch', name: 'Crispy Chicken Skin', serving: '20g', price: 19, kcal: 115, p: 8.0, c: 0.2, f: 9.4, fib: 0, order: 1 },
+      { id: 'c2', cat: 'crunch', name: 'Crispy Bacon', serving: '10g', price: 19, kcal: 54, p: 3.7, c: 0.1, f: 4.2, fib: 0, order: 2 },
+      { id: 'c3', cat: 'crunch', name: 'Corn Chips', serving: '20g', price: 19, kcal: 98, p: 1.4, c: 13.2, f: 4.8, fib: 1.1, order: 3 },
+      { id: 'c4', cat: 'crunch', name: 'Crispy Whole Wheat', serving: '20g', price: 15, kcal: 78, p: 2.6, c: 14.5, f: 1.2, fib: 2.2, order: 4 },
+      { id: 'c5', cat: 'crunch', name: 'Crispy Shallots', serving: '15g', price: 9, kcal: 72, p: 0.9, c: 6.8, f: 4.8, fib: 0.6, order: 5 },
+      { id: 'v1', cat: 'veggies', name: 'Quinoa', serving: '50g', price: 25, kcal: 60, p: 2.2, c: 10.7, f: 1.0, fib: 1.4, order: 1 },
+      { id: 'v2', cat: 'veggies', name: 'Japanese Pumpkin', serving: '100g', price: 19, kcal: 45, p: 1.2, c: 10.5, f: 0.1, fib: 1.8, order: 2 },
+      { id: 'v3', cat: 'veggies', name: 'Sweet Corn', serving: '50g', price: 15, kcal: 43, p: 1.6, c: 9.5, f: 0.6, fib: 1.2, order: 3 },
+      { id: 'v4', cat: 'veggies', name: 'Edamame', serving: '30g', price: 15, kcal: 36, p: 3.6, c: 2.7, f: 1.5, fib: 1.5, order: 4 },
+      { id: 'v5', cat: 'veggies', name: 'Cherry Tomatoes', serving: '50g', price: 15, kcal: 9, p: 0.5, c: 1.9, f: 0.1, fib: 0.6, order: 5 },
+      { id: 'v6', cat: 'veggies', name: 'White Beans', serving: '50g', price: 9, kcal: 69, p: 4.8, c: 12.5, f: 0.3, fib: 3.1, order: 6 },
+      { id: 'v7', cat: 'veggies', name: 'Shredded Carrots', serving: '30g', price: 0, kcal: 12, p: 0.3, c: 2.9, f: 0.1, fib: 0.8, order: 7 },
+      { id: 'v8', cat: 'veggies', name: 'Red Onions', serving: '30g', price: 0, kcal: 12, p: 0.3, c: 2.8, f: 0, fib: 0.5, order: 8 },
+      { id: 'v9', cat: 'veggies', name: 'Japanese Cucumber', serving: '30g', price: 0, kcal: 5, p: 0.2, c: 1.1, f: 0, fib: 0.3, order: 9 },
+      { id: 'v10', cat: 'veggies', name: 'Radish', serving: '30g', price: 0, kcal: 5, p: 0.2, c: 1.0, f: 0, fib: 0.5, order: 10 },
+      { id: 't1', cat: 'toppings', name: 'Feta Cheese', serving: '10g', price: 29, kcal: 26, p: 1.4, c: 0.4, f: 2.1, fib: 0, order: 1 },
+      { id: 't2', cat: 'toppings', name: 'Parmesan Cheese', serving: '10g', price: 29, kcal: 43, p: 3.8, c: 0.4, f: 2.9, fib: 0, order: 2 },
+      { id: 't3', cat: 'toppings', name: 'Olive Oil', serving: '20ml', price: 29, kcal: 168, p: 0, c: 0, f: 18.4, fib: 0, order: 3 },
+      { id: 't4', cat: 'toppings', name: 'Black Olives', serving: '10g', price: 19, kcal: 12, p: 0.1, c: 0.6, f: 1.1, fib: 0.3, order: 4 },
+      { id: 't5', cat: 'toppings', name: 'Sliced Almonds', serving: '15g', price: 15, kcal: 87, p: 3.2, c: 3.3, f: 7.4, fib: 1.8, order: 5 },
+      { id: 't6', cat: 'toppings', name: 'Cashew Nuts', serving: '15g', price: 15, kcal: 83, p: 2.7, c: 4.5, f: 6.6, fib: 0.5, order: 6 },
+      { id: 't7', cat: 'toppings', name: 'Walnuts', serving: '15g', price: 15, kcal: 98, p: 2.3, c: 2.1, f: 9.8, fib: 1.0, order: 7 },
+      { id: 't8', cat: 'toppings', name: 'Pumpkin Seeds', serving: '15g', price: 15, kcal: 85, p: 4.5, c: 2.0, f: 7.4, fib: 1.0, order: 8 },
+      { id: 'd1', cat: 'dressing', name: 'Chipotle', serving: '50ml', price: 19, kcal: 230, p: 0.5, c: 6.4, f: 23.0, fib: 0.4, order: 1 },
+      { id: 'd2', cat: 'dressing', name: 'Honey Mustard', serving: '50ml', price: 9, kcal: 158, p: 1.2, c: 15.2, f: 10.5, fib: 0.5, order: 2 },
+      { id: 'd3', cat: 'dressing', name: 'Olive oil & Balsamic', serving: '30ml', price: 9, kcal: 148, p: 0.1, c: 4.2, f: 14.8, fib: 0.1, order: 3 },
+      { id: 'd4', cat: 'dressing', name: 'Caesar', serving: '50ml', price: 9, kcal: 195, p: 1.5, c: 2.2, f: 20.8, fib: 0.1, order: 4 },
+      { id: 'd5', cat: 'dressing', name: 'Gochujang', serving: '50ml', price: 0, kcal: 164, p: 1.8, c: 15.6, f: 10.8, fib: 0.8, order: 5 },
+      { id: 'd6', cat: 'dressing', name: 'Miso Sesame', serving: '50ml', price: 0, kcal: 242, p: 2.6, c: 8.6, f: 22.4, fib: 0.9, order: 6 }
+    ];
 
     let siteConfig = JSON.parse(localStorage.getItem('chub_config')) || DEFAULT_CONFIG;
+    let categories = JSON.parse(localStorage.getItem('chub_categories')) || DEFAULT_CATEGORIES;
     let ingredients = JSON.parse(localStorage.getItem('chub_ingredients')) || DEFAULT_INGREDIENTS;
     
     let selectedCart = {};
-    let activeCategory = 'proteins';
+    let activeCategory = categories.length > 0 ? categories[0].id : '';
     let isTrackerCollapsed = false;
     let targetNutrition = { mode: 'auto', kcal: 600, protein: 45, carb: 60, fat: 20, fiber: 8 };
 
@@ -1034,22 +1065,25 @@
 
     function renderCategoryButtons() {
       const wrapper = document.getElementById('categoryScroll');
-      wrapper.innerHTML = CATEGORIES.map(cat => `
-        <button class="cat-btn ${cat === activeCategory ? 'active' : ''}" onclick="setCategory('${cat}')">
-          ${cat}
+      if (!categories.some(c => c.id === activeCategory) && categories.length > 0) {
+        activeCategory = categories[0].id;
+      }
+      wrapper.innerHTML = categories.map(cat => `
+        <button class="cat-btn ${cat.id === activeCategory ? 'active' : ''}" onclick="setCategory('${cat.id}')">
+          ${cat.name}
         </button>
       `).join('');
     }
 
-    function setCategory(cat) {
-      activeCategory = cat;
+    function setCategory(catId) {
+      activeCategory = catId;
       renderCategoryButtons();
       renderIngredients();
     }
 
     function renderIngredients() {
       const container = document.getElementById('ingredientsContainer');
-      const filtered = ingredients.filter(i => i.cat === activeCategory);
+      const filtered = ingredients.filter(i => i.cat === activeCategory).sort((a, b) => (a.order || 0) - (b.order || 0));
 
       container.innerHTML = filtered.map(item => {
         const qty = selectedCart[item.id] || 0;
@@ -1197,7 +1231,7 @@
       document.getElementById('receiptFinalTotal').innerText = `฿${totals.grandTotal}`;
     }
 
-    /* ADMIN CMS & INGREDIENT MANAGER */
+    /* ADMIN CMS & MANAGERS */
     function openAdminLogin() {
       document.getElementById('adminPinInput').value = '';
       document.getElementById('adminLoginModal').classList.add('active');
@@ -1220,6 +1254,7 @@
       document.getElementById('cfgBasePrice').value = siteConfig.basePrice;
       document.getElementById('cfgLogoText').value = siteConfig.logoText;
       document.getElementById('cfgScreenshotAlert').value = siteConfig.screenshotAlert;
+      renderAdminCategoriesList();
       renderAdminIngredientsList();
     }
     function closeAdminPanel() {
@@ -1236,23 +1271,161 @@
       alert("บันทึกตั้งค่าทั่วไปเรียบร้อย!");
     }
 
-    function renderAdminIngredientsList() {
-      const container = document.getElementById('adminIngredientsList');
-      container.innerHTML = ingredients.map(item => `
+    /* CATEGORY MANAGEMENT FUNCTIONS */
+    function renderAdminCategoriesList() {
+      const container = document.getElementById('adminCategoriesList');
+      container.innerHTML = categories.map((cat, index) => `
         <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 8px; border-bottom:1px solid #F3F4F6; font-size:0.8rem;">
           <div>
-            <strong>${item.name}</strong> <span style="color:var(--text-muted);">[${item.cat}]</span><br>
-            <span style="font-size:0.7rem; color:var(--text-muted);">฿${item.price} | ${item.kcal} kcal | P:${item.p} C:${item.c} F:${item.f} Fib:${item.fib}</span>
+            <strong>${cat.name}</strong> <span style="color:var(--text-muted);">(${cat.id})</span>
           </div>
-          <div style="display:flex; gap:4px;">
-            <button class="btn-reset-clean" style="padding:4px 8px; font-size:0.7rem;" onclick="openItemModal('${item.id}')">แก้ไข</button>
-            <button class="btn-reset-clean" style="padding:4px 8px; font-size:0.7rem; background:#FEE2E2; color:#991B1B;" onclick="deleteIngredient('${item.id}')">ลบ</button>
+          <div style="display:flex; gap:4px; align-items:center;">
+            <button class="btn-reset-clean" style="padding:2px 6px; font-size:0.7rem;" onclick="moveCategory(${index}, -1)" ${index === 0 ? 'disabled style="opacity:0.4"' : ''}>▲</button>
+            <button class="btn-reset-clean" style="padding:2px 6px; font-size:0.7rem;" onclick="moveCategory(${index}, 1)" ${index === categories.length - 1 ? 'disabled style="opacity:0.4"' : ''}>▼</button>
+            <button class="btn-reset-clean" style="padding:4px 8px; font-size:0.7rem;" onclick="openCategoryModal('${cat.id}')">แก้ไข</button>
+            <button class="btn-reset-clean" style="padding:4px 8px; font-size:0.7rem; background:#FEE2E2; color:#991B1B;" onclick="deleteCategory('${cat.id}')">ลบ</button>
           </div>
         </div>
       `).join('');
     }
 
+    function openCategoryModal(id) {
+      document.getElementById('categoryModal').classList.add('active');
+      if (id) {
+        const cat = categories.find(c => c.id === id);
+        if (cat) {
+          document.getElementById('catModalTitle').innerText = "แก้ไขหมวดหมู่";
+          document.getElementById('editCatId').value = cat.id;
+          document.getElementById('catIdInput').value = cat.id;
+          document.getElementById('catIdInput').disabled = true; // ไม่อนุญาตให้เปลี่ยน ID ป้องกันลิงก์ข้อมูลพัง
+          document.getElementById('catNameInput').value = cat.name;
+        }
+      } else {
+        document.getElementById('catModalTitle').innerText = "เพิ่มหมวดหมู่ใหม่";
+        document.getElementById('editCatId').value = '';
+        document.getElementById('catIdInput').value = '';
+        document.getElementById('catIdInput').disabled = false;
+        document.getElementById('catNameInput').value = '';
+      }
+    }
+
+    function closeCategoryModal() {
+      document.getElementById('categoryModal').classList.remove('active');
+    }
+
+    function saveCategoryData() {
+      const editId = document.getElementById('editCatId').value;
+      const id = document.getElementById('catIdInput').value.trim().toLowerCase();
+      const name = document.getElementById('catNameInput').value.trim();
+
+      if (!id || !name) {
+        alert("กรุณากรอกรหัสและชื่อหมวดหมู่ให้ครบถ้วน");
+        return;
+      }
+
+      if (editId) {
+        const cat = categories.find(c => c.id === editId);
+        if (cat) {
+          cat.name = name;
+        }
+      } else {
+        if (categories.some(c => c.id === id)) {
+          alert("รหัสหมวดหมู่นี้มีอยู่แล้วในระบบ");
+          return;
+        }
+        categories.push({ id, name });
+      }
+
+      localStorage.setItem('chub_categories', JSON.stringify(categories));
+      closeCategoryModal();
+      renderAdminCategoriesList();
+      renderCategoryButtons();
+      renderIngredients();
+      alert("บันทึกหมวดหมู่เรียบร้อย!");
+    }
+
+    function deleteCategory(id) {
+      const hasItems = ingredients.some(i => i.cat === id);
+      if (hasItems) {
+        alert("ไม่สามารถลบหมวดหมู่นี้ได้เนื่องจากยังมีวัตถุดิบอยู่ภายในหมวดหมู่ กรุณาลบหรือย้ายวัตถุดิบออกก่อน");
+        return;
+      }
+      if (confirm("ต้องการลบหมวดหมู่นี้ใช่หรือไม่?")) {
+        categories = categories.filter(c => c.id !== id);
+        localStorage.setItem('chub_categories', JSON.stringify(categories));
+        renderAdminCategoriesList();
+        renderCategoryButtons();
+        renderIngredients();
+      }
+    }
+
+    function moveCategory(index, direction) {
+      const newIndex = index + direction;
+      if (newIndex < 0 || newIndex >= categories.length) return;
+      const temp = categories[index];
+      categories[index] = categories[newIndex];
+      categories[newIndex] = temp;
+      localStorage.setItem('chub_categories', JSON.stringify(categories));
+      renderAdminCategoriesList();
+      renderCategoryButtons();
+    }
+
+    /* INGREDIENT MANAGEMENT & REORDERING FUNCTIONS */
+    function renderAdminIngredientsList() {
+      const container = document.getElementById('adminIngredientsList');
+      // จัดกลุ่มตามหมวดหมู่และเรียงตาม order
+      let html = '';
+      categories.forEach(cat => {
+        const catItems = ingredients.filter(i => i.cat === cat.id).sort((a, b) => (a.order || 0) - (b.order || 0));
+        if (catItems.length > 0) {
+          html += `<div style="font-size:0.75rem; font-weight:700; background:#E5E7EB; padding:3px 6px; margin-top:6px; border-radius:4px; color:var(--primary-orange);">หมวดหมู่: ${cat.name}</div>`;
+          catItems.forEach((item, index) => {
+            html += `
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 8px; border-bottom:1px solid #F3F4F6; font-size:0.8rem;">
+                <div>
+                  <strong>${item.name}</strong><br>
+                  <span style="font-size:0.7rem; color:var(--text-muted);">฿${item.price} | ${item.kcal} kcal | P:${item.p} C:${item.c} F:${item.f} Fib:${item.fib}</span>
+                </div>
+                <div style="display:flex; gap:4px; align-items:center;">
+                  <button class="btn-reset-clean" style="padding:2px 6px; font-size:0.7rem;" onclick="moveIngredient('${item.id}', -1)" ${index === 0 ? 'disabled style="opacity:0.4"' : ''}>▲</button>
+                  <button class="btn-reset-clean" style="padding:2px 6px; font-size:0.7rem;" onclick="moveIngredient('${item.id}', 1)" ${index === catItems.length - 1 ? 'disabled style="opacity:0.4"' : ''}>▼</button>
+                  <button class="btn-reset-clean" style="padding:4px 8px; font-size:0.7rem;" onclick="openItemModal('${item.id}')">แก้ไข</button>
+                  <button class="btn-reset-clean" style="padding:4px 8px; font-size:0.7rem; background:#FEE2E2; color:#991B1B;" onclick="deleteIngredient('${item.id}')">ลบ</button>
+                </div>
+              </div>
+            `;
+          });
+        }
+      });
+      container.innerHTML = html || '<div style="text-align:center; padding:10px; color:var(--text-muted); font-size:0.8rem;">ยังไม่มีวัตถุดิบ</div>';
+    }
+
+    function moveIngredient(id, direction) {
+      const item = ingredients.find(i => i.id === id);
+      if (!item) return;
+      const catItems = ingredients.filter(i => i.cat === item.cat).sort((a, b) => (a.order || 0) - (b.order || 0));
+      const currentIndex = catItems.findIndex(i => i.id === id);
+      const targetIndex = currentIndex + direction;
+      if (targetIndex < 0 || targetIndex >= catItems.length) return;
+
+      // สลับค่า order กับตัวเป้าหมาย
+      const tempOrder = catItems[currentIndex].order || 0;
+      catItems[currentIndex].order = catItems[targetIndex].order || 0;
+      catItems[targetIndex].order = tempOrder;
+
+      // หาก order เท่ากัน ให้จัดลำดับใหม่ทั้งหมดในหมวดหมู่นั้น
+      catItems.forEach((it, idx) => { it.order = idx + 1; });
+
+      localStorage.setItem('chub_ingredients', JSON.stringify(ingredients));
+      renderAdminIngredientsList();
+      renderIngredients();
+    }
+
     function openItemModal(id) {
+      // โหลดตัวเลือกหมวดหมู่ใส่ใน Select ของฟอร์มวัตถุดิบ
+      const catSelect = document.getElementById('itemCat');
+      catSelect.innerHTML = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
       document.getElementById('itemModal').classList.add('active');
       if (id) {
         const item = ingredients.find(i => i.id === id);
@@ -1272,7 +1445,7 @@
       } else {
         document.getElementById('itemModalTitle').innerText = "เพิ่มวัตถุดิบใหม่";
         document.getElementById('editItemId').value = '';
-        document.getElementById('itemCat').value = 'proteins';
+        if (categories.length > 0) document.getElementById('itemCat').value = categories[0].id;
         document.getElementById('itemName').value = '';
         document.getElementById('itemServing').value = '50g';
         document.getElementById('itemPrice').value = 0;
@@ -1308,11 +1481,14 @@
       if (id) {
         const index = ingredients.findIndex(i => i.id === id);
         if (index !== -1) {
-          ingredients[index] = { id, cat, name, serving, price, kcal, p, c, f, fib };
+          const currentOrder = ingredients[index].order || 1;
+          ingredients[index] = { id, cat, name, serving, price, kcal, p, c, f, fib, order: currentOrder };
         }
       } else {
         const newId = 'item_' + Date.now();
-        ingredients.push({ id: newId, cat, name, serving, price, kcal, p, c, f, fib });
+        const catItems = ingredients.filter(i => i.cat === cat);
+        const maxOrder = catItems.length > 0 ? Math.max(...catItems.map(i => i.order || 0)) : 0;
+        ingredients.push({ id: newId, cat, name, serving, price, kcal, p, c, f, fib, order: maxOrder + 1 });
       }
 
       localStorage.setItem('chub_ingredients', JSON.stringify(ingredients));
