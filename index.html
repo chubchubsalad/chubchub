@@ -781,7 +781,6 @@
   </div>
 
   <script>
-    // URL Google Sheets CSV จากคุณ
     const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTJ9tcXkoqCt28WhVDOkyFKq6ARuIV9wBBrlapUzd5w65zTTn_qx-21lyVVc1i1faz6-Tcb5DGyBG-l/pub?output=csv";
 
     const DEFAULT_CONFIG = {
@@ -792,22 +791,17 @@
       bgUrl: "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?q=80&w=2070&auto=format&fit=crop"
     };
 
-    // สำรองข้อมูลเผื่อดึงเน็ตไม่สำเร็จ
     const FALLBACK_INGREDIENTS = [
-      { id: 'p1', cat: 'proteins', name: 'Blackened Chicken', serving: '80g', price: 59, kcal: 156, p: 17.2, c: 1.6, f: 9.2, fib: 0.5 },
-      { id: 'p2', cat: 'proteins', name: 'Sous Vide Chicken Breast', serving: '80g', price: 49, kcal: 102, p: 24.8, c: 0.4, f: 0.8, fib: 0.1 },
-      { id: 'p3', cat: 'proteins', name: 'Boiled Shrimp', serving: '3 pcs', price: 69, kcal: 65, p: 14.0, c: 0.2, f: 0.6, fib: 0 },
-      { id: 'p4', cat: 'proteins', name: 'Minced Beef Nachos', serving: '50g', price: 49, kcal: 126, p: 11.2, c: 1.4, f: 8.6, fib: 0.4 },
-      { id: 'p5', cat: 'proteins', name: 'Chickpeas', serving: '50g', price: 15, kcal: 82, p: 4.5, c: 13.7, f: 1.3, fib: 3.8 },
-      { id: 'p6', cat: 'proteins', name: 'Boiled Egg', serving: '1 pc', price: 9, kcal: 74, p: 6.3, c: 0.4, f: 5.0, fib: 0 }
+      { id: 'r1', cat: 'recommended', name: 'Blackened Chicken', serving: '80g', price: 59, kcal: 156, p: 17.2, c: 1.6, f: 9.2, fib: 0.5 },
+      { id: 'r2', cat: 'recommended', name: 'Sous Vide Chicken Breast', serving: '80g', price: 49, kcal: 102, p: 24.8, c: 0.4, f: 0.8, fib: 0.1 }
     ];
 
-    const CATEGORIES = ['proteins', 'greens', 'crunch', 'veggies', 'toppings', 'dressing'];
+    let CATEGORIES = []; // หมวดหมู่จะถูกดึงจากชีทอัตโนมัติ
 
     let siteConfig = JSON.parse(localStorage.getItem('chub_config')) || DEFAULT_CONFIG;
     let ingredients = FALLBACK_INGREDIENTS;
     let selectedCart = {};
-    let activeCategory = 'proteins';
+    let activeCategory = '';
     let isTrackerCollapsed = false;
 
     let targetNutrition = { mode: 'auto', kcal: 600, protein: 45, carb: 60, fat: 20, fiber: 8 };
@@ -815,20 +809,25 @@
     window.addEventListener('DOMContentLoaded', async () => {
       applyConfigToUI();
       calculateBMR();
-      renderCategoryButtons();
       
-      // ดึงข้อมูลสดใหม่จาก Google Sheets
+      // 1. ดึงข้อมูลจากชีท
       await loadIngredientsFromGoogleSheets();
       
+      // 2. ดึงชื่อหมวดหมู่ทั้งหมดจากชีทแบบไม่ซ้ำกัน
+      CATEGORIES = [...new Set(ingredients.map(i => i.cat).filter(Boolean))];
+      if (CATEGORIES.length > 0 && !activeCategory) {
+        activeCategory = CATEGORIES[0]; // หมวดแรกสุดในชีท เช่น recommended จะถูกเลือกทันที
+      }
+
+      // 3. แสดงผลหน้าเว็บ
+      renderCategoryButtons();
       renderIngredients();
       updateTrackerDashboard();
       lucide.createIcons();
     });
 
-    /* ระบบดึงข้อมูลจาก Google Sheets CSV */
     async function loadIngredientsFromGoogleSheets() {
       try {
-        // เติม cache-buster เพื่อป้องกัน Safari จำแคชเดิม
         const response = await fetch(`${GOOGLE_SHEETS_CSV_URL}&t=${Date.now()}`);
         if (!response.ok) throw new Error("Network response was not ok");
         const csvText = await response.text();
@@ -842,7 +841,6 @@
       }
     }
 
-    /* ฟังก์ชันแปลง CSV เป็น Object Array */
     function parseCSV(text) {
       const lines = text.trim().split('\n');
       if (lines.length < 2) return [];
@@ -854,7 +852,6 @@
         const line = lines[i].trim();
         if (!line) continue;
         
-        // แยก comma อย่างปลอดภัย
         const row = line.split(',').map(cell => cell.trim().replace(/^"|"$/g, ''));
         const obj = {};
 
@@ -862,11 +859,10 @@
           obj[h] = row[index];
         });
 
-        // จัดรูปข้อมูลให้ตรงตามที่ระบบใช้
         if (obj.name && obj.cat) {
           result.push({
             id: obj.id || `ing_${i}`,
-            cat: (obj.cat || '').toLowerCase(),
+            cat: (obj.cat || '').toLowerCase().trim(),
             name: obj.name,
             serving: obj.serving || '',
             price: parseFloat(obj.price) || 0,
@@ -989,6 +985,10 @@
 
     function renderCategoryButtons() {
       const wrapper = document.getElementById('categoryScroll');
+      if (!CATEGORIES || CATEGORIES.length === 0) {
+        wrapper.innerHTML = '';
+        return;
+      }
       wrapper.innerHTML = CATEGORIES.map(cat => `
         <button class="cat-btn ${cat === activeCategory ? 'active' : ''}" onclick="setCategory('${cat}')">
           ${cat}
@@ -1005,6 +1005,11 @@
     function renderIngredients() {
       const container = document.getElementById('ingredientsContainer');
       const filtered = ingredients.filter(i => i.cat === activeCategory);
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding: 24px; color: var(--text-muted); font-size: 0.9rem;">ไม่มีวัตถุดิบในหมวดนี้</div>`;
+        return;
+      }
 
       container.innerHTML = filtered.map(item => {
         const qty = selectedCart[item.id] || 0;
