@@ -10,6 +10,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Tesseract.js for Free Client-Side OCR -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
   <style>
     :root {
@@ -142,6 +144,29 @@
       background: var(--text-main);
       color: white;
       border-color: var(--text-main);
+    }
+
+    /* Scan / Camera Button */
+    .btn-scan-camera {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      background: white;
+      border: 1.5px dashed var(--primary-orange);
+      color: var(--primary-orange);
+      padding: 10px;
+      border-radius: 16px;
+      font-size: 0.86rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 12px;
+      transition: all 0.2s;
+    }
+    .btn-scan-camera:active {
+      background: rgba(255, 94, 0, 0.08);
+      transform: scale(0.99);
     }
 
     /* Compact Ingredient List Items */
@@ -473,7 +498,7 @@
       padding-top: 12px;
     }
 
-    /* Modals */
+    /* Modals & Loading */
     .modal-backdrop {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -494,6 +519,27 @@
       background: white;
       border-radius: 22px;
       padding: 20px;
+    }
+    .loading-card {
+      background: white;
+      border-radius: 20px;
+      padding: 24px 20px;
+      text-align: center;
+      max-width: 320px;
+      width: 100%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 4px solid #E5E7EB;
+      border-top-color: var(--primary-orange);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px auto;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
     .hidden { display: none !important; }
   </style>
@@ -639,6 +685,12 @@
 
     <!-- STEP 2: BUILD BOWL -->
     <section id="step2View" class="hidden">
+      <!-- Camera Scan Button (New) -->
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleScanReceipt(this)">
+      <button class="btn-scan-camera" onclick="document.getElementById('cameraInput').click()">
+        <i data-lucide="camera" style="width:18px;"></i> ถ่ายรูปสแกนรายการวัตถุดิบอัตโนมัติ
+      </button>
+
       <div class="category-scroll" id="categoryScroll"></div>
       <div class="ingredients-grid" id="ingredientsContainer"></div>
     </section>
@@ -740,6 +792,15 @@
     </div>
   </div>
 
+  <!-- OCR SCAN LOADING MODAL -->
+  <div class="modal-backdrop" id="ocrLoadingModal">
+    <div class="loading-card">
+      <div class="spinner"></div>
+      <div style="font-weight:700; font-size:1rem; margin-bottom:4px;">กำลังอ่านข้อความจากภาพ...</div>
+      <div style="font-size:0.75rem; color:var(--text-muted);" id="ocrStatusTxt">กำลังเตรียมความพร้อมของ AI</div>
+    </div>
+  </div>
+
   <!-- ADMIN LOGIN & CMS MODALS (PIN: 0682) -->
   <div class="modal-backdrop" id="adminLoginModal">
     <div style="background:white; border-radius:20px; padding:20px; width:300px; text-align:center;">
@@ -796,7 +857,7 @@
       { id: 'r2', cat: 'recommended', name: 'Sous Vide Chicken Breast', serving: '80g', price: 49, kcal: 102, p: 24.8, c: 0.4, f: 0.8, fib: 0.1 }
     ];
 
-    let CATEGORIES = []; // หมวดหมู่จะถูกดึงจากชีทอัตโนมัติ
+    let CATEGORIES = [];
 
     let siteConfig = JSON.parse(localStorage.getItem('chub_config')) || DEFAULT_CONFIG;
     let ingredients = FALLBACK_INGREDIENTS;
@@ -810,16 +871,13 @@
       applyConfigToUI();
       calculateBMR();
       
-      // 1. ดึงข้อมูลจากชีท
       await loadIngredientsFromGoogleSheets();
       
-      // 2. ดึงชื่อหมวดหมู่ทั้งหมดจากชีทแบบไม่ซ้ำกัน
       CATEGORIES = [...new Set(ingredients.map(i => i.cat).filter(Boolean))];
       if (CATEGORIES.length > 0 && !activeCategory) {
-        activeCategory = CATEGORIES[0]; // หมวดแรกสุดในชีท เช่น recommended จะถูกเลือกทันที
+        activeCategory = CATEGORIES[0];
       }
 
-      // 3. แสดงผลหน้าเว็บ
       renderCategoryButtons();
       renderIngredients();
       updateTrackerDashboard();
@@ -875,6 +933,58 @@
         }
       }
       return result;
+    }
+
+    /* OCR SCANNING FUNCTION (TESSERACT.JS) */
+    async function handleScanReceipt(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const modal = document.getElementById('ocrLoadingModal');
+      const statusTxt = document.getElementById('ocrStatusTxt');
+      modal.classList.add('active');
+      statusTxt.innerText = "กำลังประมวลผลรูปภาพ...";
+
+      try {
+        const worker = await Tesseract.createWorker(['tha', 'eng'], 1, {
+          logger: m => {
+            if (m.status === 'recognizing text') {
+              statusTxt.innerText = `กำลังสแกนตัวอักษร (${Math.round(m.progress * 100)}%)`;
+            }
+          }
+        });
+
+        const ret = await worker.recognize(file);
+        const rawText = (ret.data.text || '').toLowerCase().replace(/[\s\-_]/g, '');
+        await worker.terminate();
+
+        let matchedItems = [];
+
+        // ค้นหาวัตถุดิบที่ชื่อตรงกับข้อความที่สแกนได้
+        ingredients.forEach(item => {
+          const cleanName = item.name.toLowerCase().replace(/[\s\-_]/g, '');
+          if (cleanName.length > 2 && rawText.includes(cleanName)) {
+            selectedCart[item.id] = (selectedCart[item.id] || 0) + 1;
+            matchedItems.push(item.name);
+          }
+        });
+
+        modal.classList.remove('active');
+
+        if (matchedItems.length > 0) {
+          renderIngredients();
+          updateTrackerDashboard();
+          alert(`ตรวจพบและเพิ่ม ${matchedItems.length} รายการลงในชามแล้ว:\n• ` + matchedItems.join('\n• '));
+        } else {
+          alert("ไม่พบชื่อวัตถุดิบที่ตรงกับข้อมูลในเมนู กรุณาลองถ่ายภาพให้ชัดเจนขึ้นหรือเลือกด้วยตนเอง");
+        }
+      } catch (err) {
+        console.error("OCR Error:", err);
+        modal.classList.remove('active');
+        alert("เกิดข้อผิดพลาดในการประมวลผลรูปภาพ กรุณาลองใหม่อีกครั้ง");
+      } finally {
+        input.value = '';
+      }
     }
 
     function applyConfigToUI() {
@@ -1127,7 +1237,6 @@
       const now = new Date();
       document.getElementById('receiptTimestamp').innerText = `วันที่ ${now.toLocaleDateString('th-TH')} ${now.toLocaleTimeString('th-TH')}`;
 
-      // Nutrition Table
       document.getElementById('receiptNutritionTable').innerHTML = `
         <tr><td>แคลอรี่ (Kcal)</td><td style="text-align:right; font-weight:700;">${totals.kcal}</td><td style="text-align:right; color:var(--text-muted);">${targetNutrition.kcal}</td></tr>
         <tr><td>โปรตีน (Protein)</td><td style="text-align:right; font-weight:700;">${totals.p}g</td><td style="text-align:right; color:var(--text-muted);">${targetNutrition.protein}g</td></tr>
