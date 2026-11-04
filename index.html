@@ -685,7 +685,7 @@
 
     <!-- STEP 2: BUILD BOWL -->
     <section id="step2View" class="hidden">
-      <!-- Camera Scan Button -->
+      <!-- Camera Scan Button (New) -->
       <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleScanReceipt(this)">
       <button class="btn-scan-camera" onclick="document.getElementById('cameraInput').click()">
         <i data-lucide="camera" style="width:18px;"></i> ถ่ายรูปสแกนรายการวัตถุดิบอัตโนมัติ
@@ -935,7 +935,7 @@
       return result;
     }
 
-    /* OCR SCANNING FUNCTION (ระบบจับคู่อัจฉริยะ ตรวจจับยืดหยุ่นขึ้น) */
+    /* OCR SCANNING FUNCTION (TESSERACT.JS) */
     async function handleScanReceipt(input) {
       const file = input.files[0];
       if (!file) return;
@@ -955,29 +955,15 @@
         });
 
         const ret = await worker.recognize(file);
-        // ทำความสะอาดข้อความ ตัดวรรคและอักขระพิเศษออกเป็นสตริงติดกัน
-        const rawText = (ret.data.text || '').toLowerCase();
-        const compactRawText = rawText.replace(/[\s\-_,.:;()\/\\#]/g, '');
+        const rawText = (ret.data.text || '').toLowerCase().replace(/[\s\-_]/g, '');
         await worker.terminate();
 
         let matchedItems = [];
 
+        // ค้นหาวัตถุดิบที่ชื่อตรงกับข้อความที่สแกนได้
         ingredients.forEach(item => {
-          const rawName = item.name.toLowerCase().trim();
-          const compactItemName = rawName.replace(/[\s\-_,.:;()\/\\#]/g, '');
-          
-          // 1. ตรวจสอบชื่อติดกันตรงๆ (Exact Compact Match)
-          let isMatch = compactItemName.length >= 2 && compactRawText.includes(compactItemName);
-
-          // 2. ถ้าไม่เจอ ให้แยกคำที่มีความหมาย (ความยาว >= 3 ตัวอักษร) มาตรวจจับ
-          if (!isMatch) {
-            const words = rawName.split(/[\s\-_]+/).map(w => w.trim()).filter(w => w.length >= 3);
-            if (words.length > 0) {
-              isMatch = words.some(w => rawText.includes(w) || compactRawText.includes(w));
-            }
-          }
-
-          if (isMatch) {
+          const cleanName = item.name.toLowerCase().replace(/[\s\-_]/g, '');
+          if (cleanName.length > 2 && rawText.includes(cleanName)) {
             selectedCart[item.id] = (selectedCart[item.id] || 0) + 1;
             matchedItems.push(item.name);
           }
